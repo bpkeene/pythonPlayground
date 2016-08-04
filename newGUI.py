@@ -1,6 +1,10 @@
+# note - on OSX, requires framework build of python/2.7 to run, as this
+# application requires access to the screen (this may only apply to systems
+# running Mavericks or later)
+
 ######
 #
-#
+#  Some license info here
 #
 ######
 import  wx
@@ -13,29 +17,44 @@ myDict = {}
 # utf-encoded angstroms unit, for use in labels on the GUI
 angstrom = u'\u212B'.encode('utf-8')
 
-
+# general class for wx.Panel objects
 class Panel(wx.Panel):
 
-  def __init__(self,parent,notebook=None):
+  def __init__(self,parent):
     # initialize the panel with a grid accessible to other methods
-    wx.Panel.__init__(self,parent)
-    self.grid = wx.GridBagSizer(hgap=5,vgap=5)
+    wx.Panel.__init__(self,parent);
+    self.grid = wx.GridBagSizer(hgap=5,vgap=5);
 
     # some panels are initialized as members of a notebook, while others are directly
     # assigned to the frame; this is handled here
-    if notebook is not None:
-      pass
-    else:
-      pass
 
-    # that's really all we need for the empty class
-    # everything else is a widget, which is specific to the panel it is on
-    #
-    # each individual panel is a unique instance of the class
+    # we record whether this panel is a notebook; whether it has a friend (an accompanying
+    # panel, which is neither a child nor parent, but will be shown whenever this panel appears);
+    # whether it has a parent; whether it has a child; whether it has widgets;
 
-    # an object of type aWidget is passed to the panel to be added;
-    # it must be added to the grid and be able to receive and pass events
+    # note that all panels have a parent; top level panels have the frame as their parent object,
+    # which in turn has the window as its parent
+    self._isNotebook = False;
+    self._hasSibling = False;
+    self._hasParent = True;
+    self._hasChild = False;
+    self._hasWidgets = False;
+
+    # a given panel may be a member of one notebook;
+    # a given panel may have multiple siblings;
+    # a given panel may have one parent;
+    # a given panel may have multiple children;
+    self._notebookName = [];
+    self._siblings = [];
+    self._parent = wx.
+    self._children = [];
+    self._widgets = [];
+
+
   def addWidget():
+    # when adding a widget, we consider the grid position it will be added to, as well
+    # as the flags which will be implemented when placing the widget on the grid
+
     pass
 
     # destroy an object of type aWidget
