@@ -13,7 +13,7 @@
 #  Some license info here
 #
 ######
-import wx
+import wx, os
 from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 
@@ -23,15 +23,16 @@ myDict = {}
 # utf-encoded angstroms unit, for use in labels on the GUI
 angstrom = u'\u212B'.encode('utf-8')
 
-## we only need one frame for the GUI; holds all the panels/notebooks
-
-# TODO: this class..
 class Frame(wx.Frame):
-  def __init__(self):
-    wx.Frame.__init__(self,None,title="Name")
-    #self.SetInitialSize((900,620))
 
-  pass
+    # implicit argument self
+    # parent: typically None, but if a frame is spawned dynamically it may be useful to pass the relevant object
+    # title: string displayed at the top of the frame (the name)
+    # size: integer tuple (e.g., (100,100)) specifying the size of the frame
+  def __init__(self, parent, title, size):
+    wx.Frame.__init__(self,parent,title)
+    self.SetInitialSize((size))
+
 
 # this class will be used as the parent panel for any notebook-type pages;
 # likely that these Notebook objects will be the direct children of the frame, rather than an
@@ -39,25 +40,40 @@ class Frame(wx.Frame):
 
 # TODO: this needs to be refined, heavily
 class Notebook(wx.Panel):
-  def __init__(self,parent, *args, **kwargs):
-    wx.Panel.__init__(self,parent)
-    thisNotebook = wx.Notebook(self)
+    # the implicit self argument
+    # parent panel object
+    # the pages to be added to this notebook
+    # and the names of the pages
+  def __init__(self,parent,pages):
+    # instantiate the notebook
+    thisNotebook = wx.Notebook(self, parent)
     self.listOfPageObjs = []
     self.pageObjs = []
-    # somehow make this work... need to pass panel class objects and call, e.g., panelObj(thisNotebook)
-    for index, item in enumerate(args):
+
+    for index, item in enumerate(pages):
       self.listOfPageObjs.append(str(item))
       self.pageObjs.append(item(thisNotebook))
 
       ## need their names here
+      # we should be able to obtain them via a wx() method
       thisNotebook.AddPage(self.pageObjs[index],objName)
-      # need to pass in their names as well, which will show up as the labels
 
     # add a sizer to the notebook
     thisSizer=wx.BoxSizer()
     thisSizer.Add(thisNotebook,1,wx.EXPAND)
     self.SetSizer(thisSizer)
-  pass
+
+    self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
+  # we can define this dynamically (per-instance of the object)
+  # and outside of the class
+  def customBehavior():
+    pass
+
+  def OnPageChanging(self,event):
+    oldPage = event.GetOldSelection()
+    newPage = event.GetSelection()
+
+    customBehavior()
 
 
 # general class for wx.Panel objects
@@ -89,7 +105,7 @@ class Panel(wx.Panel):
     self._friends = [];
 
     # TODO: pseudocode; change this
-    self._parent = wx.GetName(parent);
+    #self._parent = wx.GetName(parent);
     # end todo
 
     self._children = [];
@@ -104,12 +120,14 @@ class Panel(wx.Panel):
 
     # TODO: un-pseudocode this;
     #some pseudocode of what we need from the widget when we instantiate it
-    widgetName = wx.GetName(widget);
-    widgetCoords = wx.GetCoords(widget);
-    widgetSpan = wx.GetSpan(widget);
-    widgetFlags = wx.GetFlags(widget);
+    #widgetName = wx.GetName(widget);
+    #widgetID = wx.GetID();
+    #widgetCoords = wx.GetCoords(widget);
+    #widgetSpan = wx.GetSpan(widget);
+    #widgetFlags = wx.GetFlags(widget);
 
     # should the widget already be bound to a function? consider this (TODO)
+    self.grid.Add(widget.
     pass
 
     # destroy an object of type Widget
@@ -123,15 +141,15 @@ class Panel(wx.Panel):
 # TODO: consider, what other information is general to all widgets? are there any objects here now
 # that might be considered extraneous to the majority of them? reduce waste
 class Widget:
-  def __init__(self,name,coords,widgetType,span=(1,1),label=None,labelPosition=None,**kwargs):
+  def __init__(self,name,coords,widgetType,span=(1,1),parent=None,label=None,labelPosition=None,**kwargs):
     # note that we use **kwargs to pass in information that may be specific to certain type
     # of widget; e.g., text widget vs button vs ... etc.
     # **kwargs is a list of KeyWord ARGumentS (kwargs)  of arbitrary length
     # note that, by default, there is no label (and no label position <(int,int)> provided
-    self._name = name #string
-    self._coords = coords #tuple of coords: "(integer, integer)"
-    self._widgetType = widgetType # button, textwidget, label, etc.
-
+    self._name = name; #string
+    self._coords = coords; #tuple of coords: "(integer, integer)"
+    self._widgetType = widgetType; # button, textwidget, label, etc.
+    self._parent = parent;
     # default behavior of span is (1,1) if not specified;
     self._span = span
 
@@ -142,16 +160,17 @@ class Widget:
       except:
         print "Error: label %s specified, but no label position tuple (int,int) given! " %label
 
-    # here we create the actual widget object? I think..
-    if self.widgetType is "staticText":
+        if self._widgetType is "staticText":
       pass
-    elif self.widgetType is "button":
+    elif self._widgetType is "button":
       pass
-    elif self.widgetType is "textWidget":
+    elif self._widgetType is "textWidget":
       pass
 
   def instantiateWidget(self):
-    pass
+    self._parent.addWidget(self)
+
+  def makeWidget(self):
 
 
     # consider handling for a 'display' widget - one that displays the current value of another widget
@@ -176,27 +195,27 @@ class Widget:
 ##########################################
 ##########################################
 
-app = wx.App(False)
-thisFrame = Frame()
+#app = wx.App(False)
+#thisFrame = Frame()
 
 #### the first panel
-firstPanelObj = Panel(thisFrame)
+#firstPanelObj = Panel(thisFrame)
 
 # some widgets
-firstPanelNames = ["runName", "simulationDirectory", "ensemble", "numberOfSpecies"]
-firstPanelLabels = ["Run Name: ", "Simulation Directory: ", "Ensemble: ", "Number of Species: "]
-firstPanelCoords = [(3,3), (4,3), (5,3), (6,3)]
-firstPanelSpans = [(1,1), (1,1), (1,1), (1,1)]
-firstPanelWidgetTypes = ["textWidget", "button", "choice", "choice"]
-widgetsOne = []
+#firstPanelNames = ["runName", "simulationDirectory", "ensemble", "numberOfSpecies"]
+#firstPanelLabels = ["Run Name: ", "Simulation Directory: ", "Ensemble: ", "Number of Species: "]
+#firstPanelCoords = [(3,3), (4,3), (5,3), (6,3)]
+#firstPanelSpans = [(1,1), (1,1), (1,1), (1,1)]
+#firstPanelWidgetTypes = ["textWidget", "button", "choice", "choice"]
+#widgetsOne = []
 
-for index, item in enumerate(firstPanelNames):
-  widgetsOne.append(Widget(name = firstPanelNames[index], coords = firstPanelCoords[index], \
-                            widgetType = firstPanelWidgetTypes[index], span = firstPanelSpans[index],\
-                            label = firstPanelLabels[index], labelPosition = "left"))
+#for index, item in enumerate(firstPanelNames):
+#  widgetsOne.append(Widget(name = firstPanelNames[index], coords = firstPanelCoords[index], \
+#                            widgetType = firstPanelWidgetTypes[index], span = firstPanelSpans[index],\
+#                            label = firstPanelLabels[index], labelPosition = "left"))
 
-for index, item in enumerate(widgetsOne):
-  print item.name
+#for index, item in enumerate(widgetsOne):
+#  print item.name
 
   #def __init__(self,name,coords,span=(1,1),widgetType,label=None,labelPosition=None,**kwargs):
 
@@ -214,8 +233,8 @@ for index, item in enumerate(widgetsOne):
 
 
 
-thisFrame.Show()
-app.MainLoop()
+#thisFrame.Show()
+#app.MainLoop()
 
 
 
