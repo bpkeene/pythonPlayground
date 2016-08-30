@@ -127,7 +127,7 @@ class Panel(wx.Panel):
     #widgetFlags = wx.GetFlags(widget);
 
     # should the widget already be bound to a function? consider this (TODO)
-    self.grid.Add(widget.
+    #self.grid.Add(widget.
     pass
 
     # destroy an object of type Widget
