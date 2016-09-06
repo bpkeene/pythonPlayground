@@ -1,5 +1,5 @@
 # note - on OSX, requires framework build of python/2.7 to run, as this
-# application requires access to the screen (this may only apply to systems
+# application requires access to the screen (this might only apply to systems
 # running Mavericks or later)
 
 
@@ -20,19 +20,35 @@ from wx.lib.pubsub import pub
 # global dictionary in which we store data
 myDict = {}
 
-# utf-encoded angstroms unit, for use in labels on the GUI
-angstrom = u'\u212B'.encode('utf-8')
-
 class Frame(wx.Frame):
+    # note to others: we pass another class (an instance of MainFrame) to this wx.Frame derived class;
+    # the ambiguity of parent in the class __init__ vs the wx.Frame.__init__ is due to parent in the
+    # wx.Frame.__init__ function being a /keyword/ argument, rather than a python convention, as is used
+    # in the class __init__ funciton.  The wx.Frame.__init__ parent argument /must/ be a wx.Window object,
+    # or simply value "None", which is what we usually use
+    def __init__(self,parent):
+        wx.Frame.__init__(self,parent=parent._windowObj,title = parent._title, size = parent._size)
+        self.Show()
 
+
+# we define our own MainFrame() class, because we don't instantly want to create an actual wx.Frame object yet
+class MainFrame:
+  _register = []
     # implicit argument self
     # parent: typically None, but if a frame is spawned dynamically it may be useful to pass the relevant object
     # title: string displayed at the top of the frame (the name)
     # size: integer tuple (e.g., (100,100)) specifying the size of the frame
-  def __init__(self, parent, title, size):
-    wx.Frame.__init__(self,parent,title)
-    self.SetInitialSize((size))
+  def __init__(self, parent, title, size, **kwargs):
+      self._parent = parent;
+      self._title = title;
+      self._size = size;
+      self._windowObj = kwargs.get("windowObj",None)
 
+
+  def initFrame(self):
+
+      # make an instance of the frame, that is an derived class of the wx.Frame class
+      self._frame = Frame(self)
 
 # this class will be used as the parent panel for any notebook-type pages;
 # likely that these Notebook objects will be the direct children of the frame, rather than an
@@ -75,9 +91,13 @@ class Notebook(wx.Panel):
 
     customBehavior()
 
-
-# general class for wx.Panel objects
 class Panel(wx.Panel):
+    def __init__(self,parent,wxObj):
+        # again, in the wx.Panel.__init__ function call, parent is a keyword argument that takes a wx object
+        wx.Panel.__init__(self,parent=wxObj);
+
+# in this class, we collate all the information we'll need to make a well-defined wx.Panel object
+class BasePanel:
 
   def __init__(self,parent):
     # on initialization, the panel should be initialized ...
@@ -160,7 +180,7 @@ class Widget:
       except:
         print "Error: label %s specified, but no label position tuple (int,int) given! " %label
 
-        if self._widgetType is "staticText":
+      #  if self._widgetType is "staticText":
       pass
     elif self._widgetType is "button":
       pass
@@ -171,74 +191,5 @@ class Widget:
     self._parent.addWidget(self)
 
   def makeWidget(self):
-
-
-    # consider handling for a 'display' widget - one that displays the current value of another widget
-    # that may not otherwise have a displayable value, e.g. a button (direct example: simulation directory)
-
-
-
-# consider - how to control show/hide without explicitly coding it?
-# answer: make it its own class with data structures and handling etc. auto-contruct a tree of relational hierarchies
-# that is created after passing information in via instantiation with the 'Widget' class
-# note that this would need access to instantaneous values and would need to check those values in between events
-# i.e., during loop. ... how?
-
-##########################################
-##########################################
-# This is the actual script, where
-# object creation begins.
-# To add a new widget,
-# add it below this point after
-# creating whatever base objects your
-# widget will require
-##########################################
-##########################################
-
-#app = wx.App(False)
-#thisFrame = Frame()
-
-#### the first panel
-#firstPanelObj = Panel(thisFrame)
-
-# some widgets
-#firstPanelNames = ["runName", "simulationDirectory", "ensemble", "numberOfSpecies"]
-#firstPanelLabels = ["Run Name: ", "Simulation Directory: ", "Ensemble: ", "Number of Species: "]
-#firstPanelCoords = [(3,3), (4,3), (5,3), (6,3)]
-#firstPanelSpans = [(1,1), (1,1), (1,1), (1,1)]
-#firstPanelWidgetTypes = ["textWidget", "button", "choice", "choice"]
-#widgetsOne = []
-
-#for index, item in enumerate(firstPanelNames):
-#  widgetsOne.append(Widget(name = firstPanelNames[index], coords = firstPanelCoords[index], \
-#                            widgetType = firstPanelWidgetTypes[index], span = firstPanelSpans[index],\
-#                            label = firstPanelLabels[index], labelPosition = "left"))
-
-#for index, item in enumerate(widgetsOne):
-#  print item.name
-
-  #def __init__(self,name,coords,span=(1,1),widgetType,label=None,labelPosition=None,**kwargs):
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#thisFrame.Show()
-#app.MainLoop()
-
-
-
-
-
-
+    pass
 
