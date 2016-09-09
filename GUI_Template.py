@@ -1,34 +1,50 @@
+#********************************************************************************
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#********************************************************************************
+#
+#   Created by Brian Keene on 8 September 2016
+#
+#   Revision history:
+#
+#
+#********************************************************************************
 # note - on OSX, requires framework build of python/2.7 to run, as this
 # application requires access to the screen (this might only apply to systems
 # running Mavericks or later)
 
+# This script for a graphical user interface is intended to serve as a template for
+# graphical user interfaces; primarily intended to be used as a simplified
+# front-end of wx.Widgets, and to allow for easy setup of dynamic hiding that
+# might involve cross-communication between objects of assorted placement in
+# the hierarchy of parent-child objects.  Allows for an OOP creation of a GUI,
+# with emphasis on easy modification in the accompanying script.
 
-# This script for a graphical user interface is intended to serve as a template for future, complex
-# graphical user interfaces; primarily intended to be used as a simplified front-end of wx.Widgets,
-# allow for easy setup of dynamic hiding that might involve cross-communication between objects of
-# assorted placement in the hierarchy of parent-child objects.
-# Allows for an OOP creation of a GUI, with emphasis on easy modification in the accompanying script.
-
-######
-#
-#  Some license info here
-#
-######
+# import the needed modules
 import wx, os
-from wx.lib.pubsub import setupkwargs
-from wx.lib.pubsub import pub
 
 # global dictionary in which we store data
 myDict = {}
 
 class wxFrame(wx.Frame):
-    # note to others: we pass another class (an instance of MainFrame) to this wx.Frame derived class;
+    # note to others: we pass another class (an instance of Frame) to this wx.Frame derived class;
     # the ambiguity of parent in the class __init__ vs the wx.Frame.__init__ is due to parent in the
     # wx.Frame.__init__ function being a /keyword/ argument, rather than a python convention, as is used
     # in the class __init__ funciton.  The wx.Frame.__init__ parent argument /must/ be a wx.Window object,
     # or simply value "None", which is what we usually use
     def __init__(self,sibling):
-        wx.Frame.__init__(self,parent=sibling._windowObj,title = sibling._title, size = sibling._size)
+        wx.Frame.__init__(self,parent=sibling._parent,title = sibling._title, size = sibling._size)
 
 # we define our own MainFrame() class, because we don't instantly want to create an actual wx.Frame object yet
 class Frame:
@@ -46,7 +62,6 @@ class Frame:
         self._parent = parent;
         self._title = title;
         self._size = size;
-        self._windowObj = kwargs.get("windowObj",None)
 
         # an instance variable holding other instances that are children of this instance
         self._children = []
@@ -61,28 +76,9 @@ class Frame:
         # iterate over this instance's children and initialize them.
         for obj in self._children:
             obj.initObj();
+
+        # we have no instantiated all of the objects on this frame; show the frame
         self._obj.Show()
-
-
-# this class will be used as the parent panel for any notebook-type pages;
-# likely that these Notebook objects will be the direct children of the frame, rather than an
-# object of the Panel class
-# or is it an object of the notebook class?
-#class wxNotebook:
-#
-#    # an implicit self argument
-#    # and the parent instance to which this notebook will be added
-#    def __init__(self,sibling):
-#        self._obj = wx.Notebook(sibling._parent._obj);
-#
-#        self._children = [];
-#        for index, obj in enumerate(sibling._children):
-#            # call the init() methods of the child objects;
-#            # and then we want to append the wx instances of the child objects
-#            # after that, we want to head to
-#            obj.initObj();
-#            self._children.append(obj._obj)
-#            self._obj.AddPage(self._children[index], obj._name)
 
 
 # our notebook class that collates information before making a wx.Notebook notebook
@@ -116,6 +112,7 @@ class Notebook:
         self._parent._obj.SetSizer(self.NBSizer)
         Notebook._register.append(self)
 
+    # TODO
     def customBehavior():
         pass
 
@@ -128,17 +125,31 @@ class Notebook:
 
 class wxPanel(wx.Panel):
     def __init__(self,sibling):
-        print sibling._name
         wx.Panel.__init__(self,parent=sibling._parent._obj);
-        self.grid = wx.GridBagSizer(hgap=5,vgap=5);
-        self.SetSizer(self.grid);
+        self._needsSizer = True;
+        for obj in sibling._children:
+            if obj._typeName == "Notebook":
+                self._needsSizer = False;
+                break
+        if self._needsSizer:
+            self.grid = wx.GridBagSizer(hgap=5,vgap=5);
+            self.SetSizer(self.grid);
 
         # call the init methods of the objects, which then places wxWidget objects in the self._widgets variable for
         # each Widget class instance
-        for obj in sibling._children:
-            if obj._typeName == "Widget":
-                obj.init();
-                self.grid.Add(obj._widget, pos=obj._pos, span=obj._span)
+        # a panel holding a notebook will never have a widget - its a dummy panel
+        for child in sibling._children:
+            if child._typeName == "Widget":
+                child.initObj(self);
+                self.grid.Add(child._obj, pos=child._pos, span=child._span)
+                print child._name
+                if child._function is not None:
+                    self.Bind(child._wxEvt,child._function,child._obj)
+                if child._label is not None:
+                    # we know that this will be a label;
+                    child._labelObj = wx.StaticText(self,label=child._label)
+                    self.grid.Add(child._labelObj,child._labelPos, child._labelSpan)
+        self.Layout()
                 # call the self.Bind() functionality here
 
 # in this class, we collate all the information we'll need to make a well-defined wx.Panel object
@@ -165,6 +176,8 @@ class Panel:
         self._children = []
         parent._children.append(self);
 
+        # we use a name if this panel is a child of a Notebook object; in this case, the name is the
+        # displayed atop the notebook
         self._name = kwargs.get("name",None)
 
     def initObj(self):
@@ -191,41 +204,65 @@ class Widget:
     _register = []
     _typeName = "Widget"
 
-
-    def __init__(self,name,coords,widgetType,span=(1,1),parent=None,label=None,labelPosition=None,**kwargs):
+    # for all Widget objects, we need the parent object, widgetType, name, and position
+    def __init__(self,parent,widgetType,name,pos,**kwargs):
         # note that we use **kwargs to pass in information that may be specific to certain type
         # of widget; e.g., text widget vs button vs ... etc.
         # **kwargs is a list of KeyWord ARGumentS (kwargs)  of arbitrary length
         # note that, by default, there is no label (and no label position <(int,int)> provided
-        self._name = name; #string
-        self._coords = coords; #tuple of coords: "(integer, integer)"
-        self._widgetType = widgetType; # button, textwidget, label, etc.
-        self._parent = parent;
-        # default behavior of span is (1,1) if not specified;
-        self._span = span
 
+        #####################
+        # Required arguments
+        #####################
+        self._parent = parent; # parent object, typically an instance of Panel
+        self._widgetType = widgetType; # button, textwidget, label, etc.
+        self._name = name; #string
+        self._pos = pos; #tuple of coords: "(integer, integer)"
+
+        ############################
+        # optional arguments
+        # we can specify a label (if so, must specify a position)
+        # the spans of the label and widget default to (1,1)
+        # if a widget can use an initial value (e.g., a text control), it defaults to an empty string
+        # if a widget is to be bound to a function, must specify this explicitly or bind to it later
+        ############################
+        self._label = kwargs.get('label',None)
+        self._labelPos = kwargs.get('labelPos',None)
+        # default behavior of span is (1,1) if not specified
+        self._span = kwargs.get('span',(1,1))
+        self._labelSpan = kwargs.get('labelSpan',(1,1))
+        self._initValue = kwargs.get('value',"")
+        self._function = kwargs.get('function',None)
         # a buffer value - holds the data immediately prior to the widget's most recent interaction
         # for choice widgets, this will be a complete value; for textwidgets, it will be string = str[:-2]
         self._buffer = ""
+        self._wxEvt = None
 
-        if label:
-            self.label = label
-            try:
-                self.labelPosition = labelPosition
-            except:
-                print "Error: label %s specified, but no label position tuple (int,int) given! " %label
+        # these will be instantiated during the creation of the parent object
+        self._labelObj = None;
+        self._obj = None;
+        # append the object to the list of children in the parent instance
+        parent._children.append(self)
 
-            #  if self._widgetType is "staticText":
+    # allows the function to which the widget will be bound to be set after construction of the widget instance
+    # we allow the function to be defined according to whatever parameters the user inputs; no implicit self
+    def setFunction(self,function):
+        self._function = function;
+
+    # maybe the user wants to attach labels later; allow them to do so here
+    def setLabel(self,label,labelPos,**kwargs):
+        self._label = label;
+        self._labelPos = labelPos;
+        self._labelSpan = kwargs.get('labelSpan',(1,1))
+
+
+    # this is a bottom level object; it requires a parentInstance on initialization
+    def initObj(self,parentInstance):
+        if (self._widgetType == "text"):
+            self._obj = wx.TextCtrl(parentInstance,value=self._initValue,name=self._name)
+            self._wxEvt = wx.EVT_TEXT
+
+        # more types of widgets to be implemented
+        else:
             pass
-
-        elif self._widgetType is "button":
-            pass
-        elif self._widgetType is "textWidget":
-            pass
-
-    def instantiateWidget(self):
-        self._parent.addWidget(self)
-
-    def makeWidget(self):
-        pass
 
