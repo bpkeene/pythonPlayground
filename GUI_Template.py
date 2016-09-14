@@ -149,8 +149,10 @@ class wxPanel(wx.Panel):
                     # we know that this will be a label;
                     child._labelObj = wx.StaticText(self,label=child._label)
                     self.grid.Add(child._labelObj,child._labelPos, child._labelSpan)
+                if (child._hasSlave):
+                    self.Bind(child._wxEvt, child.masterFunction, child._obj)
+
         self.Layout()
-                # call the self.Bind() functionality here
 
 # in this class, we collate all the information we'll need to make a well-defined wx.Panel object
 class Panel:
@@ -233,21 +235,60 @@ class Widget:
         self._labelSpan = kwargs.get('labelSpan',(1,1))
         self._initValue = kwargs.get('value',"")
         self._function = kwargs.get('function',None)
-        # a buffer value - holds the data immediately prior to the widget's most recent interaction
-        # for choice widgets, this will be a complete value; for textwidgets, it will be string = str[:-2]
-        self._buffer = ""
-        self._wxEvt = None
 
+        self._wxEvt = None
+        self._hasMaster = False; # default this to false; changed if the setMaster() function is called on self
+        self._hasSlave = False;
         # these will be instantiated during the creation of the parent object
         self._labelObj = None;
         self._obj = None;
         # append the object to the list of children in the parent instance
         parent._children.append(self)
 
+        # the master widget - this is a /Widget/ instance
+        self._masters = []
+
+        # denotes messages from master that instruct self to Hide()
+        # these should be strings
+        self._hideWhen = []
+
+        # widgets to which self is master; note that this is set implicitly via setMaster, when
+        # other widgets denotes self as master
+        # this is a /Widget/ instance (not a wx object)
+        self._slaves = []
     # allows the function to which the widget will be bound to be set after construction of the widget instance
     # we allow the function to be defined according to whatever parameters the user inputs; no implicit self
+
+    def masterFunction(self,event):
+        message = str(event.GetString())
+        for slave in self._slaves:
+            slave.evaluateMessage(message);
+
+    def evaluateMessage(self,message):
+        if message in self._hideWhen:
+            self._obj.Hide()
+            self._parent._obj.Layout()
+        else:
+            self._obj.Show()
+            self._parent._obj.Layout()
+
+    def setMaster(self, master, hideWhen):
+        self._masters.append(master)
+
+        # assume hideWhen is in the form of an array
+        for instruction in hideWhen:
+            self._hideWhen.append(instruction)
+
+        # append self to master._slaves[]
+        master._slaves.append(self);
+        self._hasMaster = True;
+
+        if master._hasSlave == False:
+            master._hasSlave = True;
+
     def setFunction(self,function):
         self._function = function;
+
 
     # maybe the user wants to attach labels later; allow them to do so here
     def setLabel(self,label,labelPos,**kwargs):
@@ -255,13 +296,16 @@ class Widget:
         self._labelPos = labelPos;
         self._labelSpan = kwargs.get('labelSpan',(1,1))
 
-
     # this is a bottom level object; it requires a parentInstance on initialization
     def initObj(self,parentInstance):
         if (self._widgetType == "text"):
             self._obj = wx.TextCtrl(parentInstance,value=self._initValue,name=self._name)
             self._wxEvt = wx.EVT_TEXT
 
+    # need to add all types of widgets here; remember to overload necessary parameters for each via kwargs.get()
+        elif (self._widgetType == "choice"):
+            #self._obj = wx.Choice(parentInstance,v
+            pass
         # more types of widgets to be implemented
         else:
             pass

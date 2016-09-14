@@ -56,7 +56,6 @@ PanelOne = Panel(TopNotebook,name="Basic Information");
 PanelTwo = Panel(TopNotebook,name="Interaction Parameters");
 PanelThree = Panel(TopNotebook,name="Probabilities Information");
 PanelFour = Panel(TopNotebook,name="File Handling");
-
 ######################################################################################
 
 
@@ -133,11 +132,12 @@ PanelFourOutputFile = Panel(PanelFourNotebook,name="Output File")
 # to print out to terminal what we type in the text widget.
 
 def defaultTextFunction(event):
-    objName = str(event.GetEventObject().GetName())
+    obj = event.GetEventObject();
+    objName = str(obj.GetName())
     val = str(event.GetString())
+
+    # this send the value to all widgets to which self is master
     print objName, ": ", val
-
-
 
 
 ######################################################################################
@@ -168,8 +168,11 @@ runNameWidget = Widget(PanelOnePageOne,widgetType="text",name="# Run_Name", pos=
 # proof of concept: define a function here, and set a widget to be bound to it on the GUI
 runNameWidget.setFunction(defaultTextFunction)
 
+testWidget = Widget(PanelOnePageOne,widgetType="text",name="# Test_Hide", pos=(4,2), \
+        label="Test Hide: ", labelPos = (4,1))
 
-
+testWidgetHide = ["hide","hideNowAlso"]
+testWidget.setMaster(runNameWidget,testWidgetHide)
 
 ######################################################################################
 
