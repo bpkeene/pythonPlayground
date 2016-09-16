@@ -141,12 +141,12 @@ def defaultTextFunction(event):
 
 
 ######################################################################################
-# SECTION 4.1: Addition of widgets to PanelOnePageOne
+# SECTION 4.1: Addition of widgets to PanelOnePageOne (Basic Information / Page One)
 ######################################################################################
 # PanelOnePageOne is the panel to which the graphical user interface opens.
 # This panel is special in that it incorporates some navigational restrictions,
 # based on the current values of the widgets on the page! These restrictions are
-# enforced by (syntax here)
+# enforced by (syntax here) TODO
 #
 # PanelOnePageOne:
 #       - Run Name text
@@ -193,6 +193,247 @@ staticText2 = Widget(PanelOnePageOne,widgetType="static",name=string2, \
 
 # set the functions to which these widgets will respond; some of them will be standard,
 # others are specific to a given widget
+
+#
+# functions bound here, and defined above if necessary
+# TODO
+
+
+# show/hide dynamics
+#
+# on PanelOnePageOne, we only have master widgets - these widgets are /always/
+# displayed.  So, there isn't much to be done!
+
+
+# initially, all objects are hidden; specify here that we show these objects.
+# since this is the first panel, we can actually iterate over all objects created thus far
+for widget in Widget._register:
+    widget.setInitHide(False)
+# for the next panels, we won't want to do that
+
+
+######################################################################################
+# SECTION 4.2: Addition of widgets to PanelOnePageTwo (Basic Information/Page Two)
+######################################################################################
+# PanelOnePageTwo asks for other basic information about the simulation, some of
+# which might be dependent on the selected ensemble or the number of species.
+#
+# PanelOnePageTwo:
+#       - Temperature
+#       - Mixing Rule
+#       - Minimum Cutoff
+#       - Pair storage
+#       - Random Number seeds
+#       - Pressure
+#       - Box information (cubic/non-cubic, length or h-matrix)
+#       - CBMC parameters
+#       - Chemical potential
+#
+######################################################################################
+
+# lists of choices for choice widgets
+mixingRulesChoices = ["","Lorentz-Berthelot","Geometric"]
+pairStorageChoices = ["","TRUE","FALSE"] #TODO check if Cassandra's I/O is all caps
+boxShapeChoices = ["", "CUBIC","NON-CUBIC"]
+
+# temperature: label and text widget
+
+# mixing rule: label and choice widget
+
+# minimum cutoff: label and text widget
+
+# Pair storage: label and choice widget
+
+# seed 1: label and text widget
+
+# seed 2: label and text widget
+
+# "Box Information" label
+
+# "Box Shape" label
+
+# Box 1: label and choice widget
+
+# Box 2: label and choice widget
+
+# Box 1 H-Matrix Frame Button (## IMPORTANT - objects added to frame below!)
+
+# Box 2 H-Matrix Frame Button (## IMPORTANT - objects added to frame below!)
+
+# "CBMC" label
+
+# "Trial Insertions" label and text widget
+
+# "Rotational Bias" label and text widget
+
+# "Trial orientations" label and text widget
+
+# "Cutoff (%angstrom) Box 1:" label and text widget
+
+# "Cutoff (%angstrom) Box 2:" label and text widget
+
+# "Chemical Potential (kJ/mol)" label
+
+# Chemical potential prompts, for species 1-6 (## IMPORTANT -
+# if support for more than 6 species within the GUI is desired, must change that here)
+
+
+
+#### H-Matrix Frame objects & functions
+
+
+
+
+
+
+# bind the widgets on this panel to functions as needed
+
+
+# show/hide dynamics
+
+
+######################################################################################
+# SECTION 4.3: Addition of widgets to PanelTwoPageOne (Interaction Parameters /
+#                                                      Intermolecular)
+######################################################################################
+# PanelTwoPageOne (InteractionParameters/Intermolecular) asks for the methods to be
+# used to calculate intermolecular potentials - for van der Waals interactions,
+# it asks for the functional form (LJ 12-6, or NONE), cut/cut_shift/cut_switch/
+# cut_tail; support for the MIE potential is TBD.
+# We also ask for the charge style to be used in simulation -
+# coulombic functional form, or NONE; calculated using Ewald Summation,
+# or a cut.
+#
+# PanelTwoPageOne:
+#       - Box 1 vdW style prompts
+#       - Box 2 vdW style prompts
+#       - Box 1 charge style prompts
+#       - Box 2 charge style prompts
+#
+######################################################################################
+
+# lists of choices for our various widgets
+vdwFunctionalFormChoices = ["","Lennard Jones 12-6","MIE","None"]
+vdwTailCorrectionChoices = ["","cut","cut_tail","cut_switch","cut_shift"]
+vdwLogicalChoices = ["","TRUE"]
+
+chargeFunctionalFormChoices = ["","Coulombic","None"]
+chargeMethodChoices = ["","Ewald","cut"]
+
+# and widgets
+
+
+
+
+# and functions for the various widgets
+
+
+# show/hide dynamics
+
+
+######################################################################################
+# SECTION 4.4: Addition of widgets to PanelTwoPageOne (Interaction Parameters /
+#                                                      Intramolecular)
+######################################################################################
+
+
+######################################################################################
+# SECTION 4.5: Addition of widgets to PanelThreeTranslation
+######################################################################################
+
+
+
+
+
+######################################################################################
+# SECTION 4.6: Addition of widgets to PanelThreeRotation
+######################################################################################
+
+
+
+
+
+######################################################################################
+# SECTION 4.7: Addition of widgets to PanelThreeRegrowth
+######################################################################################
+
+
+
+
+
+######################################################################################
+# SECTION 4.8: Addition of widgets to PanelThreeVolume
+######################################################################################
+
+
+
+
+
+######################################################################################
+# SECTION 4.9: Addition of widgets to PanelThreeInsertion
+######################################################################################
+
+
+
+
+
+######################################################################################
+# SECTION 4.10: Addition of widgets to PanelThreeSwap
+######################################################################################
+
+
+
+
+
+######################################################################################
+# SECTION 4.10: Addition of widgets to PanelThreeSwap
+######################################################################################
+
+
+
+
+
+
+######################################################################################
+# SECTION 4.11: Addition of widgets to PanelFourMoleculeFiles
+######################################################################################
+
+
+
+
+
+######################################################################################
+# SECTION 4.12: Addition of widgets to PanelFourFragmentFiles
+######################################################################################
+
+
+
+
+
+######################################################################################
+# SECTION 4.13: Addition of widgets to PanelFourInputFile
+######################################################################################
+
+
+
+
+
+######################################################################################
+# SECTION 4.14: Addition of widgets to PanelFourOutputFile
+######################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ######################################################################################
 

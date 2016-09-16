@@ -44,8 +44,8 @@ class wxFrame(wx.Frame):
     # in the class __init__ funciton.  The wx.Frame.__init__ parent argument /must/ be a wx.Window object,
     # or simply value "None", which is what we usually use
     def __init__(self,sibling):
-        wx.Frame.__init__(self,parent=sibling._parent,title = sibling._title, size = sibling._size)
-
+        wx.Frame.__init__(self,parent=sibling._parent,title=sibling._title)
+        self.SetInitialSize(sibling._size)
 # we define our own MainFrame() class, because we don't instantly want to create an actual wx.Frame object yet
 class Frame:
 
@@ -141,7 +141,7 @@ class wxPanel(wx.Panel):
         for child in sibling._children:
             if child._typeName == "Widget":
                 child.initObj(self);
-                self.grid.Add(child._obj, pos=child._pos, span=child._span)
+                self.grid.Add(child._obj, pos=child._pos, span=child._span, flag=child._gridFlags)
                 # if the base child widget object is a label, it won't have a function
                 if ((child._function is not None) and (child._wxEvt is not None)):
                     self.Bind(child._wxEvt,child._function,child._obj)
@@ -151,7 +151,11 @@ class wxPanel(wx.Panel):
                     self.grid.Add(child._labelObj,child._labelPos, child._labelSpan)
                 if (child._hasSlave):
                     self.Bind(child._wxEvt, child.masterFunction, child._obj)
-
+                # some objects are initially hidden; here, we hide them.
+                if (child._initHide):
+                    child._obj.Hide()
+                    if (child._label is not None):
+                        child._labelObj.Hide()
         self.Layout()
 
 # in this class, we collate all the information we'll need to make a well-defined wx.Panel object
@@ -202,10 +206,10 @@ class Panel:
          # ehhhh... we might have already done this in the widget class. could be better that way.
         pass
 
-class wxWidget:
-    def __init__(self,sibling):
-        self._widget = None;
-        if sibling._
+#class wxWidget:
+#    def __init__(self,sibling):
+#        self._widget = None;
+#        if sibling._
 class Widget:
     _register = []
     _typeName = "Widget"
@@ -253,6 +257,10 @@ class Widget:
         # these will be instantiated during the creation of the parent object
         self._labelObj = None;
         self._obj = None;
+
+        # Hide most objects at first; that way, they only show if they are told to show,
+        # and otherwise will hide when told to hide
+        self._initHide = True;
 
         # TODO: have the Panel's grid.Add() method use these flags when instantiating the widget
         self._gridFlags = (wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.EXPAND | wx.ALIGN_CENTER)
@@ -316,6 +324,12 @@ class Widget:
     def setGridFlags(self,flags):
         self._gridFlags = flags;
 
+    def setInitHide(self,boolean):
+        if (boolean):
+            # this is the default behavior
+            pass
+        else:
+            self._initHide = boolean;
     # maybe the user wants to attach labels later; allow them to do so here
     def setLabel(self,label,labelPos,**kwargs):
         self._label = label;
