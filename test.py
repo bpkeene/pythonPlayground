@@ -115,9 +115,8 @@ PanelFourOutputFile = Panel(PanelFourNotebook,name="Output File")
 
 
 
-
 ######################################################################################
-# SECTION 3.1: Definition of Global Functions for Widgets
+# SECTION 3.2: Definition of Global Functions for Widgets
 ######################################################################################
 # Widgets (and graphical user interfaces) are event-based applications.
 # The widgets process user input - clicks, keyboard strokes, etc. -
@@ -131,13 +130,14 @@ PanelFourOutputFile = Panel(PanelFourNotebook,name="Output File")
 # proof of concept - define a function in this script, bind and use in the template
 # to print out to terminal what we type in the text widget.
 
+# default behavior for text widget objects
 def defaultTextFunction(event):
     obj = event.GetEventObject();
-    objName = str(obj.GetName())
+    objKeyword = str(obj._sibling)
     val = str(event.GetString())
 
-    # this send the value to all widgets to which self is master
-    print objName, ": ", val
+    print objname, val
+
 
 
 ######################################################################################
@@ -146,33 +146,53 @@ def defaultTextFunction(event):
 # PanelOnePageOne is the panel to which the graphical user interface opens.
 # This panel is special in that it incorporates some navigational restrictions,
 # based on the current values of the widgets on the page! These restrictions are
-# enforced by (syntax)
+# enforced by (syntax here)
 #
-#
-#
-#
-#
-#
+# PanelOnePageOne:
+#       - Run Name text
+#       - Directory dialog (button)
+#       - Ensemble choice
+#       - Number of Species choice
+#       - Create Input file button
 #
 ######################################################################################
 
-# required input to make a Widget object:
-# parent, widgetType, name, position (pos)
-# optional arguments: label, labelPos, and others (see GUI_Template.py for full list)
+# lists of options for the choice widgets on this panel
+numberOfSpeciesChoices = ["","1","2","3","4","5","6"]
+ensembleChoices = ["", "NVT_MC","NVT_MIN","NPT_MC","GCMC","GEMC","GEMC_NPT"]
 
-# note: if we do not instruct the widget to set a label here, we can do so later
-# using the setLabel method
-runNameWidget = Widget(PanelOnePageOne,widgetType="text",name="# Run_Name", pos=(3,2), \
+# the text widget asking for the run name
+runNameWidget = Widget(PanelOnePageOne,widgetType="text",name="runName", pos=(3,2), \
         label="Run Name: ", labelPos=(3,1))
 
-# proof of concept: define a function here, and set a widget to be bound to it on the GUI
-runNameWidget.setFunction(defaultTextFunction)
+# a button (with label) from which the user may select the simulation directory
+simulationDirectoryWidget = Widget(PanelOnePageOne,widgetType="button", name="Select Directory", \
+        pos=(4,2), label="Simulation Directory: ", labelPos=(4,1))
 
-testWidget = Widget(PanelOnePageOne,widgetType="text",name="# Test_Hide", pos=(4,2), \
-        label="Test Hide: ", labelPos = (4,1))
+# a choice widget (drop down menu) from which the user may select one of Cassandra's ensembles
+ensembleWidget = Widget(PanelOnePageOne,widgetType="choice",name="# Sim_Type", \
+        pos=(5,2), label="Ensemble: ", labelPos=(5,1),choices=ensembleChoices)
 
-testWidgetHide = ["hide","hideNowAlso"]
-testWidget.setMaster(runNameWidget,testWidgetHide)
+# a choice widget from which the number of species in simulation may be selected
+numberOfSpeciesWidget = Widget(PanelOnePageOne,widgetType="choice",name="", \
+        pos=(6,2), label="Number of Species: ",labelPos=(6,1),choices=numberOfSpeciesChoices)
+
+# a button which creates the input file in the simulation directory
+makeInputFileWidget = Widget(PanelOnePageOne,widgetType="button",name="Create Input File", \
+        pos=(12,2))
+
+# a string we place on the panel
+string1= "Have you completed all prompts on all pages? "
+staticText1 = Widget(PanelOnePageOne,widgetType="static",name=string1,\
+        pos=(11,1),span=(1,3))
+
+# another string
+string2 ="If so, click here:"
+staticText2 = Widget(PanelOnePageOne,widgetType="static",name=string2, \
+        pos=(12,1),span=(1,1))
+
+# set the functions to which these widgets will respond; some of them will be standard,
+# others are specific to a given widget
 
 ######################################################################################
 

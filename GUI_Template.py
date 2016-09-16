@@ -112,7 +112,6 @@ class Notebook:
         self._parent._obj.SetSizer(self.NBSizer)
         Notebook._register.append(self)
 
-    # TODO
     def customBehavior():
         pass
 
@@ -138,12 +137,13 @@ class wxPanel(wx.Panel):
         # call the init methods of the objects, which then places wxWidget objects in the self._widgets variable for
         # each Widget class instance
         # a panel holding a notebook will never have a widget - its a dummy panel
+        # if it does, this is where an error will be thrown!
         for child in sibling._children:
             if child._typeName == "Widget":
                 child.initObj(self);
                 self.grid.Add(child._obj, pos=child._pos, span=child._span)
-                print child._name
-                if child._function is not None:
+                # if the base child widget object is a label, it won't have a function
+                if ((child._function is not None) and (child._wxEvt is not None)):
                     self.Bind(child._wxEvt,child._function,child._obj)
                 if child._label is not None:
                     # we know that this will be a label;
@@ -178,7 +178,7 @@ class Panel:
         self._children = []
         parent._children.append(self);
 
-        # we use a name if this panel is a child of a Notebook object; in this case, the name is the
+        # we use a name if this panel is a child of a Notebook object; in this case, the name is
         # displayed atop the notebook
         self._name = kwargs.get("name",None)
 
@@ -202,6 +202,10 @@ class Panel:
          # ehhhh... we might have already done this in the widget class. could be better that way.
         pass
 
+class wxWidget:
+    def __init__(self,sibling):
+        self._widget = None;
+        if sibling._
 class Widget:
     _register = []
     _typeName = "Widget"
@@ -214,12 +218,20 @@ class Widget:
         # note that, by default, there is no label (and no label position <(int,int)> provided
 
         #####################
-        # Required arguments
+        # Required arguments, for all widget types
         #####################
         self._parent = parent; # parent object, typically an instance of Panel
         self._widgetType = widgetType; # button, textwidget, label, etc.
         self._name = name; #string
         self._pos = pos; #tuple of coords: "(integer, integer)"
+
+
+        #####################
+        # Required arguments, for some widget types
+        #####################
+
+        # required for choice widgets
+        self._choices = kwargs.get('choices',None)
 
         ############################
         # optional arguments
@@ -235,13 +247,16 @@ class Widget:
         self._labelSpan = kwargs.get('labelSpan',(1,1))
         self._initValue = kwargs.get('value',"")
         self._function = kwargs.get('function',None)
-
         self._wxEvt = None
         self._hasMaster = False; # default this to false; changed if the setMaster() function is called on self
         self._hasSlave = False;
         # these will be instantiated during the creation of the parent object
         self._labelObj = None;
         self._obj = None;
+
+        # TODO: have the Panel's grid.Add() method use these flags when instantiating the widget
+        self._gridFlags = (wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.EXPAND | wx.ALIGN_CENTER)
+
         # append the object to the list of children in the parent instance
         parent._children.append(self)
 
@@ -260,16 +275,25 @@ class Widget:
     # we allow the function to be defined according to whatever parameters the user inputs; no implicit self
 
     def masterFunction(self,event):
+        # pass the value of this widget to slaved widgets
         message = str(event.GetString())
         for slave in self._slaves:
             slave.evaluateMessage(message);
 
+
     def evaluateMessage(self,message):
+        # this is used by the interface to loop over child widgets
+        # in the event that a chosen selection hides multiple levels of the parent-child hierarchy.
+        # continues until exhaustion
         if message in self._hideWhen:
             self._obj.Hide()
+            if (self._labelObj is not None):
+                self._labelObj.Hide()
             self._parent._obj.Layout()
         else:
             self._obj.Show()
+            if (self._labelObj is not None):
+                self._labelObj.Show()
             self._parent._obj.Layout()
 
     def setMaster(self, master, hideWhen):
@@ -289,6 +313,8 @@ class Widget:
     def setFunction(self,function):
         self._function = function;
 
+    def setGridFlags(self,flags):
+        self._gridFlags = flags;
 
     # maybe the user wants to attach labels later; allow them to do so here
     def setLabel(self,label,labelPos,**kwargs):
@@ -298,15 +324,31 @@ class Widget:
 
     # this is a bottom level object; it requires a parentInstance on initialization
     def initObj(self,parentInstance):
+        # for each, initialize the wx object in self._obj, and inform the class what kind of wx event to
+        # expect in self._wxEvt
+       #self._obj = wxWidget(self)
+
+
         if (self._widgetType == "text"):
             self._obj = wx.TextCtrl(parentInstance,value=self._initValue,name=self._name)
             self._wxEvt = wx.EVT_TEXT
 
     # need to add all types of widgets here; remember to overload necessary parameters for each via kwargs.get()
         elif (self._widgetType == "choice"):
-            #self._obj = wx.Choice(parentInstance,v
-            pass
+            #choicesList
+            if (self._choices is None):
+                raise ValueError('%s has no choices!  Please specify choices for the choice widget.' %(self._name))
+            self._obj = wx.Choice(parentInstance,-1,choices=self._choices,name=self._name)
+            self._wxEvt = wx.EVT_CHOICE
         # more types of widgets to be implemented
-        else:
-            pass
+        elif (self._widgetType == "button"):
+            if (self._name is None):
+                raise ValueError('%s has no name! The name of the button is displayed on the button, and \n\
+                is required!' %(self._name))
+            self._obj = wx.Button(parentInstance,label=self._name, name=self._name)
+            self._wxEvt = wx.EVT_BUTTON
+        elif (self._widgetType == "static"):
+            self._obj = wx.StaticText(parentInstance,label=self._name, name=self._name)
+            self._wxEvt = None
+
 
