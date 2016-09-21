@@ -205,12 +205,11 @@ staticText2 = Widget(PanelOnePageOne,widgetType="static",name=string2, \
 # displayed.  So, there isn't much to be done!
 
 
-# initially, all objects are hidden; specify here that we show these objects.
+# initially, all widgets  are hidden; specify here that we show these objects.
 # since this is the first panel, we can actually iterate over all objects created thus far
 for widget in Widget._register:
     widget.setInitHide(False)
 # for the next panels, we won't want to do that
-
 
 ######################################################################################
 # SECTION 4.2: Addition of widgets to PanelOnePageTwo (Basic Information/Page Two)
@@ -237,20 +236,36 @@ pairStorageChoices = ["","TRUE","FALSE"] #TODO check if Cassandra's I/O is all c
 boxShapeChoices = ["", "CUBIC","NON-CUBIC"]
 
 # temperature: label and text widget
+temperatureWidget = Widget(PanelOnePageTwo,widgetType="text",name="temperature", \
+                    pos=(1,2), label="Temperature (K): ", labelPos=(1,1))
 
 # mixing rule: label and choice widget
+mixingRuleWidget = Widget(PanelOnePageTwo, widgetType="choice",name="mixing", \
+        pos=(2,2), label="Mixing Rule: ", labelPos=(2,1), choices = mixingRulesChoices)
 
 # minimum cutoff: label and text widget
+cutoffWidget = Widget(PanelOnePageTwo, widgetType="text",name="rcutoff", \
+        pos=(3,2), label="Cutoff (%s): " %(angstrom), labelPos=(3,1))
 
 # Pair storage: label and choice widget
+pairStorageWidget = Widget(PanelOnePageTwo,widgetType="choice",name="pairStorage", \
+        pos=(4,2), label = "Pair Storage: ", labelPos = (4,1))
 
 # seed 1: label and text widget
+seed1Widget = Widget(PanelOnePageTwo, widgetType="text", name = "seed1", \
+        pos=(5,2), label = "Seed 1: ", labelPos=(5,1))
 
 # seed 2: label and text widget
+seed2Widget = Widget(PanelOnePageTwo, widgetType="text", name = "seed2", \
+        pos=(6,2), label = "Seed 2: ", labelPos=(6,1))
 
 # "Box Information" label
+boxInfoLabel = Widget(PanelOnePageTwo, widgetType="static", name = "Box Information", \
+        pos=(9,1))
 
 # "Box Shape" label
+boxShapeLabel = Widget(PanelOnePageTwo, widgetType="static", name = "Box Shape",\
+        pos=(9,2))
 
 # Box 1: label and choice widget
 

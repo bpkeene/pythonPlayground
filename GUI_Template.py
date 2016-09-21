@@ -279,6 +279,7 @@ class Widget:
         # other widgets denotes self as master
         # this is a /Widget/ instance (not a wx object)
         self._slaves = []
+        Widget._register.append(self); # append this instance to the class register
     # allows the function to which the widget will be bound to be set after construction of the widget instance
     # we allow the function to be defined according to whatever parameters the user inputs; no implicit self
 
@@ -325,11 +326,7 @@ class Widget:
         self._gridFlags = flags;
 
     def setInitHide(self,boolean):
-        if (boolean):
-            # this is the default behavior
-            pass
-        else:
-            self._initHide = boolean;
+        self._initHide = boolean;
     # maybe the user wants to attach labels later; allow them to do so here
     def setLabel(self,label,labelPos,**kwargs):
         self._label = label;
@@ -342,7 +339,7 @@ class Widget:
         # expect in self._wxEvt
        #self._obj = wxWidget(self)
 
-
+        print 'here in Widget.initObj()'
         if (self._widgetType == "text"):
             self._obj = wx.TextCtrl(parentInstance,value=self._initValue,name=self._name)
             self._wxEvt = wx.EVT_TEXT
