@@ -27,8 +27,411 @@
 #
 #********************************************************************************
 
-# import the resources from GUI_Template
-from GUI_Template import *
+# import the needed modules
+import wx, os
+
+# global dictionary in which we store data
+myDict = {}
+
+#********************************************************************************
+# Custom classes wrapping wxWidgets objects
+#********************************************************************************
+
+class wxFrame(wx.Frame):
+    # note to others: we pass another class (an instance of Frame) to this wx.Frame derived class;
+    # the ambiguity of parent in the class __init__ vs the wx.Frame.__init__ is due to parent in the
+    # wx.Frame.__init__ function being a /keyword/ argument, rather than a python convention, as is used
+    # in the class __init__ function.  The wx.Frame.__init__ parent argument /must/ be a wx.Window object,
+    # or simply value "None", which is what we usually use
+
+    # __init__ takes the implicit self argument as usual
+    # and 'sibling' here is an instance of our 'Frame' class defined immediately below this class.
+    # 'sibling' holds all the necessary data needed to define a wx.Frame object.
+    def __init__(self,sibling):
+        wx.Frame.__init__(self,parent=sibling._parent,title=sibling._title)
+        self.SetInitialSize(sibling._size)
+
+# we define our own Frame() class, because we don't instantly want to create an actual wx.Frame object yet
+class Frame:
+
+    # a static class object we can access using Frame._register[index] - we don't access this via an instance of
+    # the class; we can also iterate over it, looking for instances with specific data
+    _register = []
+    _typeName = "Frame"
+
+      # implicit argument self
+      # parent: typically None, but if a frame is spawned dynamically it may be useful to pass the relevant object
+      # title: string displayed at the top of the frame (the name)
+      # size: integer tuple (e.g., (100,100)) specifying the size of the frame in pixels
+    def __init__(self, parent, title, size, **kwargs):
+        self._parent = parent;
+        self._title = title;
+        self._size = size;
+
+        # an instance variable holding other instances that are children of this instance
+        self._children = []
+
+
+    def initObj(self):
+
+        # make an instance of the frame, that is a derived class of the wx.Frame class
+        self._obj = wxFrame(self)
+        Frame._register.append(self)
+
+        # iterate over this instance's children and initialize them.
+        for obj in self._children:
+            obj.initObj();
+
+        # we have now instantiated all of the objects on this frame; show the frame
+        self._obj.Show()
+
+
+# a wxNotebook class
+class wxNotebook(wx.Notebook):
+    # the implicit self argument, as usual
+    # and 'sibling' - the instance of 'Notebook' class (defined below) holding all
+    # necessary data needed to define the wx.Notebook
+    def __init__(self,sibling):
+
+        # create the wx.Notebook object
+        wx.Notebook(sibling._parent._obj)
+
+        # an empty list, where we list append the Panel objects that serve as pages
+        self._pages = [];
+
+        # for all objects denoted as children of our Notebook class,
+        # instantiate their object, append that object to the pages list
+        # and use the wx.Notebook.AddPage() function to add the page
+        for index, item in enumerate(sibling._children):
+            item.initObj();
+            self._pages.append(item._obj)
+            self.AddPage(self._pages[index], item._name);
+
+        # sizer stuff
+        self.NBSizer = wx.BoxSizer();
+        self.NBSizer.Add(self,1,wx.EXPAND)
+        sibling._parent._obj.SetSizer(self.NBSizer)
+
+# our notebook class that collates information before making a wx.Notebook notebook
+class Notebook:
+    # the implicit self argument
+    # parent panel object
+    # the pages to be added to this notebook
+    # and the names of the pages
+    _register = []
+    _typeName = "Notebook"
+
+    def __init__(self,parent, **kwargs):
+        # instantiate the notebook
+        self._parent = parent;
+        # an instance variable holding other instances that are children of this instance
+        self._children = [];
+        self._pages = [];
+        # append this instance to a list belonging to the parent, so that the parent knows
+        parent._children.append(self);
+
+    def initObj(self):
+
+        # our wxNotebook method initiates the instantiation of the self._children objects
+        self._obj = wx.Notebook(self._parent._obj)
+
+        # create a wxNotebook instance and store it in self._obj;  pass 'self' as the argument
+        # i.e., we pass this instance of Notebook as the 'sibling' argument (the wxNotebook 'self' is implicit)
+        ##self._obj = wxNotebook(self)
+        for index, item in enumerate(self._children):
+            item.initObj();
+            self._pages.append(item._obj);
+            self._obj.AddPage(self._pages[index], item._name);
+        self.NBSizer = wx.BoxSizer();
+        self.NBSizer.Add(self._obj, 1, wx.EXPAND)
+        self._parent._obj.SetSizer(self.NBSizer)
+        Notebook._register.append(self)
+
+    def customBehavior():
+        pass
+
+    # i think this has to be incorporated in the wxNotebook class, rather than here;
+    def OnPageChanging(self,event):
+        oldPage = event.GetOldSelection()
+        newPage = event.GetSelection()
+
+        customBehavior()
+
+class wxPanel(wx.Panel):
+    def __init__(self,sibling):
+        wx.Panel.__init__(self,parent=sibling._parent._obj);
+        self._needsSizer = True;
+        for obj in sibling._children:
+            if obj._typeName == "Notebook":
+                self._needsSizer = False;
+                break
+        if self._needsSizer:
+            self.grid = wx.GridBagSizer(hgap=5,vgap=5);
+            self.SetSizer(self.grid);
+
+        # call the init methods of the objects, which then places wxWidget objects in the self._widgets variable for
+        # each Widget class instance
+        # a panel holding a notebook will never have a widget - its a dummy panel
+        # if it does, this is where an error will be thrown!
+        for child in sibling._children:
+            if child._typeName == "Widget":
+                child.initObj(self);
+                self.grid.Add(child._obj, pos=child._pos, span=child._span, flag=child._gridFlags)
+                # if the base child widget object is a label, it won't have a function
+                if ((child._function is not None) and (child._wxEvt is not None)):
+                    self.Bind(child._wxEvt,child._function,child._obj)
+                if child._label is not None:
+                    # we know that this will be a label;
+                    child._labelObj = wx.StaticText(self,label=child._label)
+                    self.grid.Add(child._labelObj,child._labelPos, child._labelSpan)
+                if (child._hasSlave):
+                    self.Bind(child._wxEvt, child.masterFunction, child._obj)
+                # some objects are initially hidden; here, we hide them.
+                if (child._initHide):
+                    child._obj.Hide()
+                    if (child._label is not None):
+                        child._labelObj.Hide()
+        self.Layout()
+
+# in this class, we collate all the information we'll need to make a well-defined wx.Panel object
+class Panel:
+    # what do we require from the user to instantiate a base panel object?
+    # make an iterable list of panel instances; make sure methods only access this /after/
+    # the main frame has added all objects (i.e., at the end of th user's GUI script!)
+    _register = []
+
+    # all instances of this class have the _typeName = "Panel"
+    _typeName = "Panel"
+
+    def __init__(self, parent,**kwargs):
+
+        # a list of widget objects, from our widgets class, that identify this panel as their parent panel
+        # note that we do /not/ need more information, as this has the instanced objects; we can call their methods
+        # directly from here! Very convenient.
+        self._widgets = [];
+
+        # panel must have parent object on which it is displayed
+        self._parent = parent;
+
+        # a list of the instances that have this instance of the Panel class as their parent
+        self._children = []
+        parent._children.append(self);
+
+        # we use a name if this panel is a child of a Notebook object; in this case, the name is
+        # displayed atop the notebook
+        self._name = kwargs.get("name",None)
+
+    def initObj(self):
+        # we initialize the panel, which then refers to all of the panel's widgets' methods for their instantiation
+        self._obj = wxPanel(self);
+
+        # append this instance to the class register, so that we may iterate over the class instances if needed
+        Panel._register.append(self);
+
+        # iterate over self._children, and initialize objects that are /not/ of the type widget; these will
+        # be initialized in the wxPanel class!
+        for obj in self._children:
+            if (obj._typeName != "Widget"):
+                obj.initObj()
+
+    def deleteWidget():
+        pass
+
+    def bindToFunction():
+         # ehhhh... we might have already done this in the widget class. could be better that way.
+        pass
+
+#class wxWidget:
+#    def __init__(self,sibling):
+#        self._widget = None;
+#        if sibling._
+class Widget:
+    _register = []
+    _typeName = "Widget"
+
+    # for all Widget objects, we need the parent object, widgetType, name, and position
+    def __init__(self,parent,widgetType,name,pos,**kwargs):
+        # note that we use **kwargs to pass in information that may be specific to certain type
+        # of widget; e.g., text widget vs button vs ... etc.
+        # **kwargs is a list of KeyWord ARGumentS (kwargs)  of arbitrary length
+        # note that, by default, there is no label (and no label position <(int,int)> provided
+
+        #####################
+        # Required arguments, for all widget types
+        #####################
+        self._parent = parent; # parent object, typically an instance of Panel
+        self._widgetType = widgetType; # button, textwidget, label, etc.
+        self._name = name; #string
+        self._pos = pos; #tuple of coords: "(integer, integer)"
+
+
+        #####################
+        # Required arguments, for some widget types
+        #####################
+
+        # required for choice widgets
+        self._choices = kwargs.get('choices',None)
+
+        ############################
+        # optional arguments
+        # we can specify a label (if so, must specify a position)
+        # the spans of the label and widget default to (1,1)
+        # if a widget can use an initial value (e.g., a text control), it defaults to an empty string
+        # if a widget is to be bound to a function, must specify this explicitly or bind to it later
+        ############################
+        self._label = kwargs.get('label',None)
+        self._labelPos = kwargs.get('labelPos',None)
+        # default behavior of span is (1,1) if not specified
+        self._span = kwargs.get('span',(1,1))
+        self._labelSpan = kwargs.get('labelSpan',(1,1))
+        self._size = kwargs.get('size',None)
+        self._style = kwargs.get('style',None)
+        self._initValue = kwargs.get('value',"")
+        self._function = kwargs.get('function',None)
+        self._wxEvt = None
+        self._hasMaster = False; # default this to false; changed if the setMaster() function is called on self
+        self._hasSlave = False;
+        self._fontOptions = kwargs.get('fontOptions',None)
+
+
+        # these will be instantiated during the creation of the parent object
+        self._labelObj = None;
+        self._obj = None;
+
+        # Hide most objects at first; that way, they only show if they are told to show,
+        # and otherwise will hide when told to hide
+        # implement this /after/ we have connected all the show/hide funcitonality
+        self._initHide = False;
+
+        # TODO: have the Panel's grid.Add() method use these flags when instantiating the widget
+        self._gridFlags = (wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.EXPAND | wx.ALIGN_CENTER)
+
+        # default the dictionary keyword for data storage to 'None';
+        # we require the programmer to specify explicitly under what keyword to store the data
+        # this can be accessed via the 'setDictKwarg()' method, defined below
+        self._dictKwarg = None
+
+        # append the object to the list of children in the parent instance
+        parent._children.append(self)
+
+        # the master widget - this is a /Widget/ instance
+        self._masters = []
+
+        # denotes messages from master that instruct self to Hide()
+        # these should be strings
+        self._hideWhen = []
+
+        # widgets to which self is master; note that this is set implicitly via setMaster, when
+        # other widgets denotes self as master
+        # this is a /Widget/ instance (not a wx object)
+        self._slaves = []
+        Widget._register.append(self); # append this instance to the class register
+    # allows the function to which the widget will be bound to be set after construction of the widget instance
+    # we allow the function to be defined according to whatever parameters the user inputs; no implicit self
+
+    def masterFunction(self,event):
+        # pass the value of this widget to slaved widgets
+        message = str(event.GetString())
+        for slave in self._slaves:
+            slave.evaluateMessage(message);
+
+
+    def evaluateMessage(self,message):
+        # this is used by the interface to loop over child widgets
+        # in the event that a chosen selection hides multiple levels of the parent-child hierarchy.
+        # continues until exhaustion
+        if message in self._hideWhen:
+            self._obj.Hide()
+            if (self._labelObj is not None):
+                self._labelObj.Hide()
+            self._parent._obj.Layout()
+        else:
+            self._obj.Show()
+            if (self._labelObj is not None):
+                self._labelObj.Show()
+            self._parent._obj.Layout()
+
+    def setMaster(self, master, hideWhen):
+        self._masters.append(master)
+
+        # assume hideWhen is in the form of an array
+        for instruction in hideWhen:
+            self._hideWhen.append(instruction)
+
+        # append self to master._slaves[]
+        master._slaves.append(self);
+        self._hasMaster = True;
+
+        if master._hasSlave == False:
+            master._hasSlave = True;
+
+    def setDictKwarg(self,keyword):
+        self._dictKwarg = keyword;
+
+    def setFunction(self,function):
+        self._function = function;
+
+    def setGridFlags(self,flags):
+        self._gridFlags = flags;
+
+    def setInitHide(self,boolean):
+        self._initHide = boolean;
+
+    # maybe the user wants to attach labels later; allow them to do so here
+    def setLabel(self,label,labelPos,**kwargs):
+        self._label = label;
+        self._labelPos = labelPos;
+        self._labelSpan = kwargs.get('labelSpan',(1,1))
+
+    # this is a bottom level object; it requires a parentInstance on initialization
+    def initObj(self,parentInstance):
+        # for each, initialize the wx object in self._obj, and inform the class what kind of wx event to
+        # expect in self._wxEvt
+       #self._obj = wxWidget(self)
+
+        if (self._widgetType == "text"):
+            if (self._style is None):
+                self._obj = wx.TextCtrl(parentInstance,value=self._initValue,name=self._name)
+                self._wxEvt = wx.EVT_TEXT
+            else:
+                self._obj = wx.TextCtrl(parentInstance,value='',size=self._size, \
+                        name = self._name,style = self._style)
+                self._wxEvt = wx.EVT_TEXT
+
+    # need to add all types of widgets here; remember to overload necessary parameters for each via kwargs.get()
+        elif (self._widgetType == "choice"):
+            #choicesList
+            if (self._choices is None):
+                raise ValueError('%s has no choices!  Please specify choices for the choice widget.' %(self._name))
+            self._obj = wx.Choice(parentInstance,-1,choices=self._choices,name=self._name)
+            self._wxEvt = wx.EVT_CHOICE
+
+        # more types of widgets to be implemented
+        elif (self._widgetType == "button"):
+            if (self._name is None):
+                raise ValueError('%s has no name! The name of the button is displayed on the button, and \n\
+                is required!' %(self._name))
+            self._obj = wx.Button(parentInstance,label=self._name, name=self._name)
+            self._wxEvt = wx.EVT_BUTTON
+
+
+        elif (self._widgetType == "static"):
+            self._obj = wx.StaticText(parentInstance,label=self._name, name=self._name)
+            self._wxEvt = None
+           # if (self._fontOptions is not None):
+           #     self._obj.SetFont(wx.Font(self._fontOptions))
+
+        # all widgets with which we interact will store there data in the global dictionary;
+        # access to this dictionary is controlled by the _dictKwarg attribute
+        # this attribute must be appended to the wxWidget object, because I can't figure out
+        # how to refer back to the base Widget class instance once we make the wxWidget swig object
+        self._obj.__setattr__("_dictKwarg", self._dictKwarg)
+
+# utf-8 encoding of the Angstrom unit symbol; useful to have here
+angstrom = u'\u212B'.encode('utf-8')
+
+# the maximum number of species we will allow the user to specify using the GUI
+maxNumberOfSpecies = 6
 
 ######################################################################################
 # SECTION 1: Creation of the main frame object and accompanying panels
@@ -57,8 +460,6 @@ PanelTwo = Panel(TopNotebook,name="Interaction Parameters");
 PanelThree = Panel(TopNotebook,name="Probabilities Information");
 PanelFour = Panel(TopNotebook,name="File Handling");
 ######################################################################################
-
-
 
 
 
@@ -127,17 +528,63 @@ PanelFourOutputFile = Panel(PanelFourNotebook,name="Output File")
 # These are provided for ease of use
 ######################################################################################
 
-# proof of concept - define a function in this script, bind and use in the template
-# to print out to terminal what we type in the text widget.
-
 # default behavior for text widget objects
 def defaultTextFunction(event):
+
+    # ask the GUI what object received the event
     obj = event.GetEventObject();
-    objKeyword = str(obj._sibling)
+
+    # we added the dictKwarg as an attribute to the wxObject on instantiation, presumably
+    # so, get the keyword that we will use for the dictionary
+    objKeyword = obj._dictKwarg
+
+    # get the value of the event
     val = str(event.GetString())
 
-    print objname, val
+    # raise a value error if the value of object keyword is None --
+    # this means that someone forgot to assign dictionary keyword to this widget, and therefore
+    # the data won't be stored anywhere, so it won't be written to the input file!
+    noKeywordAlert = "No dictionary keyword specified for this widget - your data isn't being stored!"
+    if (objKeyword is None):
+        raise ValueError(noKeywordAlert)
 
+    # otherwise, everything went ok and we'll put the value in the dictionary
+    if (val):
+       myDict[objKeyword] = val
+
+    # this will throw a KeyError if an empty value is attempted to be written to file at the end
+    # -- in any case, we don't need to worry about it
+    # this cleans up our dictionary if the user decides they don't need to use the value after all
+    if not val:
+        del myDict[objKeyword]
+
+    print objKeyword, val
+
+# default behavior for our choice widget objects
+# this is essentially identical to our text widget function, but we make a distinction for clarity
+def defaultChoiceFunction(event):
+
+    # ask the GUI what object received the event
+    obj = event.GetEventObject();
+
+    # get the keyword associated with this object
+    objKeyword = obj._dictKwarg
+
+    # get the value of the event
+    val = str(event.GetString())
+
+    noKeywordAlert = "No dictionary keyword specified for this widget - your data isn't being stored!"
+    if (objKeyword is None):
+        raise ValueError(noKeywordAlert)
+
+    # otherwise, everything went ok and we'll put the value in the dictionary
+    if (val):
+       myDict[objKeyword] = val
+
+    if not val:
+        del myDict[objKeyword]
+
+    print objKeyword, val
 
 
 ######################################################################################
@@ -158,16 +605,23 @@ def defaultTextFunction(event):
 ######################################################################################
 
 # lists of options for the choice widgets on this panel
-numberOfSpeciesChoices = ["","1","2","3","4","5","6"]
+numberOfSpeciesChoices = [""]
+# iterative over global variable 'maxNumberOfSpecies' to add options to the choice widget
+for i in range(maxNumberOfSpecies):
+    numberOfSpeciesChoices.append("%s" %(i+1))
+
 ensembleChoices = ["", "NVT_MC","NVT_MIN","NPT_MC","GCMC","GEMC","GEMC_NPT"]
 
 # the text widget asking for the run name
-runNameWidget = Widget(PanelOnePageOne,widgetType="text",name="runName", pos=(3,2), \
+runNameWidget = Widget(PanelOnePageOne,widgetType="text", name = "",pos=(3,2), \
         label="Run Name: ", labelPos=(3,1))
 
 # a button (with label) from which the user may select the simulation directory
 simulationDirectoryWidget = Widget(PanelOnePageOne,widgetType="button", name="Select Directory", \
         pos=(4,2), label="Simulation Directory: ", labelPos=(4,1))
+
+simulationDirectoryDisplay = Widget(PanelOnePageOne,widgetType="text",name="displaySimDir", \
+        pos=(4,3), span = (1,2),style=wx.TE_READONLY,size=(200,-1))
 
 # a choice widget (drop down menu) from which the user may select one of Cassandra's ensembles
 ensembleWidget = Widget(PanelOnePageOne,widgetType="choice",name="# Sim_Type", \
@@ -181,22 +635,93 @@ numberOfSpeciesWidget = Widget(PanelOnePageOne,widgetType="choice",name="", \
 makeInputFileWidget = Widget(PanelOnePageOne,widgetType="button",name="Create Input File", \
         pos=(12,2))
 
+# our string indicating that further navigation of the GUI requires our above prompts to be answered
+# P.S., if anyone can figure out how to make this bold, kudos
+string0 = "Please provide the following information before continuing."
+
+provideInformationText = Widget(PanelOnePageOne,widgetType="static",name=string0, \
+        pos=(1,2),span=(1,4))
+
 # a string we place on the panel
 string1= "Have you completed all prompts on all pages? "
 staticText1 = Widget(PanelOnePageOne,widgetType="static",name=string1,\
-        pos=(11,1),span=(1,3))
+        pos=(11,1),span=(1,4))
 
 # another string
 string2 ="If so, click here:"
 staticText2 = Widget(PanelOnePageOne,widgetType="static",name=string2, \
         pos=(12,1),span=(1,1))
 
+
+##########
+# Set dictionary keyword for widgets which have functionality (for the most part, everything
+# other than labels); also, special case: we don't need anything for the 'create input file' button
+# since it writes the file, rather than storing anything
+##########
+runNameWidget.setDictKwarg("runName")
+simulationDirectoryWidget.setDictKwarg("simDir")
+numberOfSpeciesWidget.setDictKwarg("numSpecies")
+ensembleWidget.setDictKwarg("ensemble")
+
+#################################################
+# definition of custom functions for this panel
+#################################################
+
+def simDirFunction(event):
+    # retrieve the object that was interacted with on the GUI
+    # for this function, we know it was the simulation directory button
+    obj = event.GetEventObject();
+
+    # obj can be used approximately interchangeably with 'self' at this point
+    # this is the syntax for creating a directory dialog with wxPython
+    dlg = wx.DirDialog(obj,"Select Simulation Directory", \
+            style = wx.DD_DEFAULT_STYLE)
+
+    # once the user has navigated to the appropriate directory and pressed OK,
+    if dlg.ShowModal() == wx.ID_OK:
+        val = dlg.GetPath()
+    else:
+        val = ''
+
+    # process the data
+    directoryName = os.path.split(val)
+    if val:
+        myDict['displaySimDir'] = directoryName[1]
+        strToDisplay = "/" + myDict['displaySimDir'] + "/"
+    else:
+        myDict['displaySimDir'] = ''
+        strToDisplay = myDict['displaySimDir']
+
+    # it will then store the relative path that the user has selected
+    simulationDirectoryDisplay._obj.SetValue((strToDisplay))
+    objKeyword = obj._dictKwarg
+
+    noKeywordAlert = "No dictionary keyword specified for this widget - your data isn't being stored!"
+    if (objKeyword is None):
+        raise ValueError(noKeywordAlert)
+
+    # otherwise, everything went ok and we'll put the value in the dictionary
+    if (val):
+       myDict[objKeyword] = val
+
+    if not val:
+        del myDict[objKeyword]
+
+    print objKeyword, val
+
+def createInputFileFunction(event):
+    # TODO super dooper important, pretty much the reason for the whole thing
+    pass
+
+#################################################
 # set the functions to which these widgets will respond; some of them will be standard,
 # others are specific to a given widget
+runNameWidget.setFunction(defaultTextFunction)
+simulationDirectoryWidget.setFunction(simDirFunction)
+numberOfSpeciesWidget.setFunction(defaultChoiceFunction)
+ensembleWidget.setFunction(defaultChoiceFunction)
+makeInputFileWidget.setFunction(createInputFileFunction)
 
-#
-# functions bound here, and defined above if necessary
-# TODO
 
 
 # show/hide dynamics
@@ -209,7 +734,7 @@ staticText2 = Widget(PanelOnePageOne,widgetType="static",name=string2, \
 # since this is the first panel, we can actually iterate over all objects created thus far
 for widget in Widget._register:
     widget.setInitHide(False)
-# for the next panels, we won't want to do that
+# after we define more objects, we won't want to do that..
 
 ######################################################################################
 # SECTION 4.2: Addition of widgets to PanelOnePageTwo (Basic Information/Page Two)
@@ -224,9 +749,10 @@ for widget in Widget._register:
 #       - Pair storage
 #       - Random Number seeds
 #       - Pressure
-#       - Box information (cubic/non-cubic, length or h-matrix)
+#       - Box information (cubic/non-cubic, length or h-matrix), for boxes 1 and 2
 #       - CBMC parameters
 #       - Chemical potential
+#       - accompanying labels for all of the above named prompts
 #
 ######################################################################################
 
@@ -249,7 +775,7 @@ cutoffWidget = Widget(PanelOnePageTwo, widgetType="text",name="rcutoff", \
 
 # Pair storage: label and choice widget
 pairStorageWidget = Widget(PanelOnePageTwo,widgetType="choice",name="pairStorage", \
-        pos=(4,2), label = "Pair Storage: ", labelPos = (4,1))
+        pos=(4,2), label = "Pair Storage: ", labelPos = (4,1), choices=pairStorageChoices)
 
 # seed 1: label and text widget
 seed1Widget = Widget(PanelOnePageTwo, widgetType="text", name = "seed1", \
@@ -268,33 +794,61 @@ boxShapeLabel = Widget(PanelOnePageTwo, widgetType="static", name = "Box Shape",
         pos=(9,2))
 
 # Box 1: label and choice widget
+box1ShapeChoice = Widget(PanelOnePageTwo, widgetType="choice", name = "Box1 Shape", \
+        pos=(10,2), label = "Box 1: ", labelPos = (10,1), choices = boxShapeChoices)
 
 # Box 2: label and choice widget
+box2ShapeChoice = Widget(PanelOnePageTwo, widgetType="choice", name = "Box2 Shape", \
+        pos=(11,2), label = "Box 2: ", labelPos = (11,1), choices = boxShapeChoices)
 
 # Box 1 H-Matrix Frame Button (## IMPORTANT - objects added to frame below!)
+box1HMatrix = Widget(PanelOnePageTwo, widgetType="button", name = "Create H Matrix", \
+        pos=(10,4))
 
 # Box 2 H-Matrix Frame Button (## IMPORTANT - objects added to frame below!)
+box2HMatrix = Widget(PanelOnePageTwo, widgetType="button", name = "Create H Matrix", \
+        pos=(11,4))
 
 # "CBMC" label
+CBMCLabel = Widget(PanelOnePageTwo, widgetType="static", name="CBMC Parameters", \
+        pos=(13,1))
 
 # "Trial Insertions" label and text widget
+TrialInsertionWidget = Widget(PanelOnePageTwo, widgetType="text", name="trialInsertions", \
+        pos=(14,2), label="Trial Insertions: ", labelPos=(14,1))
 
 # "Rotational Bias" label and text widget
+RotationalBiasWidget = Widget(PanelOnePageTwo, widgetType="text", name="rotationalBias", \
+        pos=(15,2), label="Rotational Bias: ", labelPos=(15,1))
 
 # "Trial orientations" label and text widget
+trialOrientationsWidget = Widget(PanelOnePageTwo, widgetType="text", name="trialOrientations", \
+        pos=(16,2), label="Trial Orientations: ", labelPos=(16,1))
 
 # "Cutoff (%angstrom) Box 1:" label and text widget
+CBMCCutoffBox1 = Widget(PanelOnePageTwo, widgetType="text", name="cbmcCutoffB1", \
+        pos=(17,2), label="Cutoff (%s) Box 1: " %(angstrom), labelPos=(17,1))
 
 # "Cutoff (%angstrom) Box 2:" label and text widget
+CBMCCutoffBox2 = Widget(PanelOnePageTwo, widgetType="text", name="cbmcCutoffB2", \
+        pos=(18,2), label="Cutoff (%s) Box 2: " %(angstrom), labelPos=(18,1))
 
 # "Chemical Potential (kJ/mol)" label
+chemicalPotentialLabel = Widget(PanelOnePageTwo, widgetType = "static", \
+        name="Chemical Potential (kJ/mol)", pos=(1,5), span=(1,2))
 
 # Chemical potential prompts, for species 1-6 (## IMPORTANT -
 # if support for more than 6 species within the GUI is desired, must change that here)
 
 
 
-#### H-Matrix Frame objects & functions
+
+
+
+# this should be done iteratively, because. \TODO
+#### H-Matrix Frame objects & functions \TODO
+
+
 
 
 
@@ -335,8 +889,58 @@ vdwLogicalChoices = ["","TRUE"]
 chargeFunctionalFormChoices = ["","Coulombic","None"]
 chargeMethodChoices = ["","Ewald","cut"]
 
-# and widgets
+# vdw style label
 
+# Box 1 label - vdw style
+
+# Box 2 label - vdw style
+
+# box 1 functional form, vdw style
+
+# box 1 tail correction, vdw style
+
+# box 1 cutoff, vdw style
+
+# box 1 spline off, vdw style
+
+# box 1 logical, vdw style
+
+
+
+# box 2 functional form, vdw style
+
+# box 2 tail correction, vdw style
+
+# box 2 cutoff, vdw style
+
+# box 2 spline off, vdw style
+
+# box 2 logical, vdw style
+
+
+
+# charge style label
+
+# box 1 label - charge style
+
+# box 2 label - charge style
+
+
+# box 1 functional form - charge style
+
+# box 1 method - charge style
+
+# box 1 cutoff - charge style
+
+# box 1 accuracy - charge style
+
+# box 2 functional form - charge style
+
+# box 2 method - charge style
+
+# box 2 cutoff - charge style
+
+# box 2 accuracy - charge style
 
 
 
@@ -351,20 +955,117 @@ chargeMethodChoices = ["","Ewald","cut"]
 #                                                      Intramolecular)
 ######################################################################################
 
+# no lists on this page, nothing to do here!
+
+# "Select a scaling style:" label
+
+# "or enter custom values below." label
+
+# AMBER selection
+
+# CHARMM selection
+
+# efficient way to implement this?
+# species 1,2,3,4,5,6 scaling for 1-2, 1-3, 1-4, 1-N interactions
+
+
 
 ######################################################################################
 # SECTION 4.5: Addition of widgets to PanelThreeTranslation
 ######################################################################################
 
+# "Please note that the sum of the move probabilities across all move types must
+# sum to 1." label
+
+# "Enter the maximum displacement %s allowed for each species in each box below"
+# %(angstrom). label
+
+# Move probability widget
+
+# Species 1: label
+
+# Species 2: label
+
+# Species 3: label
+
+# Species 4: label
+
+# Species 5: label
+
+# Species 6: label
+
+# Box 1 label
+
+# Box 2 label
+
+# species 1 box 1 text widget
+
+# species 1 box 2 text widget
+
+# species 2 box 1 text widget
+
+# species 2 box 2 text widget
+
+# species 3 box 1 text widget
+
+# species 3 box 2 text widget
+
+# species 4 box 1 text widget
+
+# species 4 box 2 text widget
+
+# species 5 box 1 text widget
+
+# species 5 box 2 text widget
+
+# species 6 box 1 text widget
+
+# species 6 box 2 text widget
 
 
+
+# show/hide functionality
+
+
+# functions etc.
 
 
 ######################################################################################
 # SECTION 4.6: Addition of widgets to PanelThreeRotation
 ######################################################################################
 
+# "Please note that the sum of the move probabilities across all move types must
+# sum to 1." label
 
+# "Enter the maximum rotational width in degrees for each species in each box below"
+# label
+
+# Move probability widget
+
+# Species 1 label
+# .....
+
+
+
+# Box 1 Label
+
+# box 2 label
+
+# s1 b1 text widget
+
+# s1 b2 text widget
+
+# s2 b1 text widget
+
+# s2 b2 text widget
+
+# ......
+
+
+# show/hide functionality
+
+
+# functionality
 
 
 
@@ -372,22 +1073,42 @@ chargeMethodChoices = ["","Ewald","cut"]
 # SECTION 4.7: Addition of widgets to PanelThreeRegrowth
 ######################################################################################
 
+# "Please note that the sum of the move probabilities across all move types must
+# sum to 1." label
+
+# "Enter the relative probablity of regrowth for each species below." label
+
+# "Note that the relative probabilities below must sum to 1." label
+
+# Species 1 textwidget and label
+
+# .... (to 6)
 
 
+# show/hide functionality
+
+
+# functionality
 
 
 ######################################################################################
 # SECTION 4.8: Addition of widgets to PanelThreeVolume
 ######################################################################################
 
+# "Please note that the sum of the move probabilities across all move types must
+# sum to 1." label
 
+# Enter the maximum volume displacements in A^3 for the simulation box(es) below."
 
+#
 
 
 ######################################################################################
 # SECTION 4.9: Addition of widgets to PanelThreeInsertion
 ######################################################################################
 
+# "Please note that the sum of the move probabilities across all move types must
+# sum to 1." label
 
 
 
@@ -396,6 +1117,8 @@ chargeMethodChoices = ["","Ewald","cut"]
 # SECTION 4.10: Addition of widgets to PanelThreeSwap
 ######################################################################################
 
+# "Please note that the sum of the move probabilities across all move types must
+# sum to 1." label
 
 
 
@@ -404,6 +1127,8 @@ chargeMethodChoices = ["","Ewald","cut"]
 # SECTION 4.10: Addition of widgets to PanelThreeSwap
 ######################################################################################
 
+# "Please note that the sum of the move probabilities across all move types must
+# sum to 1." label
 
 
 

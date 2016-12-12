@@ -41,16 +41,21 @@ class wxFrame(wx.Frame):
     # note to others: we pass another class (an instance of Frame) to this wx.Frame derived class;
     # the ambiguity of parent in the class __init__ vs the wx.Frame.__init__ is due to parent in the
     # wx.Frame.__init__ function being a /keyword/ argument, rather than a python convention, as is used
-    # in the class __init__ funciton.  The wx.Frame.__init__ parent argument /must/ be a wx.Window object,
+    # in the class __init__ function.  The wx.Frame.__init__ parent argument /must/ be a wx.Window object,
     # or simply value "None", which is what we usually use
+
+    # __init__ takes the implicit self argument as usual
+    # and 'sibling' here is an instance of our 'Frame' class defined immediately below this class.
+    # 'sibling' holds all the necessary data needed to define a wx.Frame object.
     def __init__(self,sibling):
         wx.Frame.__init__(self,parent=sibling._parent,title=sibling._title)
         self.SetInitialSize(sibling._size)
-# we define our own MainFrame() class, because we don't instantly want to create an actual wx.Frame object yet
+
+# we define our own Frame() class, because we don't instantly want to create an actual wx.Frame object yet
 class Frame:
 
-    # a static class object we can access using MainFrame._register[index] - we don't access this via an instance of
-    # the class; we can also iterate over it, looking for objects with
+    # a static class object we can access using Frame._register[index] - we don't access this via an instance of
+    # the class; we can also iterate over it, looking for instances with specific data
     _register = []
     _typeName = "Frame"
 
@@ -69,7 +74,7 @@ class Frame:
 
     def initObj(self):
 
-        # make an instance of the frame, that is an derived class of the wx.Frame class
+        # make an instance of the frame, that is a derived class of the wx.Frame class
         self._obj = wxFrame(self)
         Frame._register.append(self)
 
@@ -77,9 +82,25 @@ class Frame:
         for obj in self._children:
             obj.initObj();
 
-        # we have no instantiated all of the objects on this frame; show the frame
+        # we have now instantiated all of the objects on this frame; show the frame
         self._obj.Show()
 
+
+# a wxNotebook class
+class wxNotebook(wx.Notebook):
+    # the implicit self argument, as usual
+    # and 'sibling' - the instance of 'Notebook' class (defined below) holding all
+    # necessary data needed to define the wx.Notebook
+    def __init__(self,sibling):
+        wx.Notebook(sibling._parent._obj)
+        self._pages = [];
+        for index, item in enumerate(sibling._children):
+            item.initObj();
+            self._pages.append(item._obj)
+            self.AddPage(self._pages[index], item._name);
+        self.NBSizer = wx.BoxSizer();
+        self.NBSizer.Add(self,1,wx.EXPAND)
+        sibling._parent._obj.SetSizer(self.NBSizer)
 
 # our notebook class that collates information before making a wx.Notebook notebook
 class Notebook:
@@ -101,8 +122,12 @@ class Notebook:
 
     def initObj(self):
 
-        # our wxNotebook method initiates the instantation of the self._children objects
+        # our wxNotebook method initiates the instantiation of the self._children objects
         self._obj = wx.Notebook(self._parent._obj)
+
+        # create a wxNotebook instance and store it in self._obj;  pass 'self' as the argument
+        # i.e., we pass this instance of Notebook as the 'sibling' argument (the wxNotebook 'self' is implicit)
+        ##self._obj = wxNotebook(self)
         for index, item in enumerate(self._children):
             item.initObj();
             self._pages.append(item._obj);
@@ -260,7 +285,8 @@ class Widget:
 
         # Hide most objects at first; that way, they only show if they are told to show,
         # and otherwise will hide when told to hide
-        self._initHide = True;
+        # implement this /after/ we have connected all the show/hide funcitonality
+        self._initHide = False;
 
         # TODO: have the Panel's grid.Add() method use these flags when instantiating the widget
         self._gridFlags = (wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.EXPAND | wx.ALIGN_CENTER)
@@ -339,7 +365,6 @@ class Widget:
         # expect in self._wxEvt
        #self._obj = wxWidget(self)
 
-        print 'here in Widget.initObj()'
         if (self._widgetType == "text"):
             self._obj = wx.TextCtrl(parentInstance,value=self._initValue,name=self._name)
             self._wxEvt = wx.EVT_TEXT
