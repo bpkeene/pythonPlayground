@@ -414,6 +414,11 @@ class Widget:
             self._obj = wx.Button(parentInstance,label=self._name, name=self._name)
             self._wxEvt = wx.EVT_BUTTON
 
+        elif (self._widgetType == "checkbox"):
+            if (self._name is None):
+                raise ValueError('This widget requires a name')
+            self._obj = wx.CheckBox(parentInstance, -1, self._name,name = self._name)
+            self._wxEvt = wx.EVT_CHECKBOX
 
         elif (self._widgetType == "static"):
             self._obj = wx.StaticText(parentInstance,label=self._name, name=self._name)
@@ -556,7 +561,7 @@ def defaultTextFunction(event):
     # -- in any case, we don't need to worry about it
     # this cleans up our dictionary if the user decides they don't need to use the value after all
     if not val:
-        if objKeyword in myDict.keys():
+        if (objKeyword in myDict.keys()):
             del myDict[objKeyword]
 
     print objKeyword, val
@@ -583,7 +588,8 @@ def defaultChoiceFunction(event):
        myDict[objKeyword] = val
 
     if not val:
-        del myDict[objKeyword]
+        if (objKeyword in myDict.keys()):
+            del myDict[objKeyword]
 
     print objKeyword, val
 
@@ -1096,7 +1102,7 @@ chemicalPotentialS6Widget.setFunction(defaultTextFunction)
 
 
 ######################################################################################
-# SECTION 4.3: Addition of widgets to PanelTwoPageOne (Interaction Parameters /
+# SECTION 4.3: Addition of widgets to PanelTwoIntermolecular (Interaction Parameters /
 #                                                      Intermolecular)
 ######################################################################################
 # PanelTwoPageOne (InteractionParameters/Intermolecular) asks for the methods to be
@@ -1298,31 +1304,93 @@ box2ChargeMethod.setFunction(defaultChoiceFunction)
 box2ChargeCutoff.setFunction(defaultTextFunction)
 box2ChargeAccuracy.setFunction(defaultTextFunction)
 
-
-
-
-
-
 # show/hide dynamics TODO
 
 
 ######################################################################################
-# SECTION 4.4: Addition of widgets to PanelTwoPageOne (Interaction Parameters /
+# SECTION 4.4: Addition of widgets to PanelTwoIntramolecular (Interaction Parameters /
 #                                                      Intramolecular)
+#  This panel holds the scale factors for intramolecular interactions
+#  of the van der Waals and coulombic type.
+#  For all species, we specify scale factors of the 1-2, 1-3, 1-4, and 1-N
+#  interactions.  For user convenience, 'CHARMM' and 'AMBER' options are provided
+#  which automatically fill in the text boxes for the number of species
+#  specified in the simulation on PanelOnePageOne.
 ######################################################################################
 
-# no lists on this page, nothing to do here!
-
 # "Select a scaling style:" label
+selectAScaleStr = "Select a scaling style: "
+selectAScalingStyleLabel = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = selectAScaleStr, pos = (1,1), span = (1,2))
 
 # "or enter custom values below." label
+orEnterStr = "or enter custom values below. "
+orEnterStyleLabel = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = orEnterStr, pos = (2,1), span = (1,2))
 
 # AMBER selection
+amberCheckbox = Widget(PanelTwoIntramolecular, widgetType = "checkbox", \
+        name = "AMBER", pos = (1,3))
 
 # CHARMM selection
+charmmCheckbox = Widget(PanelTwoIntramolecular, widgetType = "checkbox", \
+        name = "CHARMM", pos = (1,4))
 
-# efficient way to implement this?
-# species 1,2,3,4,5,6 scaling for 1-2, 1-3, 1-4, 1-N interactions
+# Species labels - left hand column
+s1IntraLabel = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "Species 1", pos = (5,1))
+s2IntraLabel = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "Species 2", pos = (7,1))
+s3IntraLabel = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "Species 3", pos = (9,1))
+s4IntraLabel = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "Species 4", pos = (11,1))
+s5IntraLabel = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "Species 5", pos = (13,1))
+s6IntraLabel = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "Species 6", pos = (15,1))
+
+vdwString = "van der Waals"
+coulombicString = "Coulombic"
+labelOptionsIntramolecular = [vdwString, coulombicString]
+# vdw /and/ charge style
+# we place these 6 times each
+
+# initialize an empty list, which will hold each static text widget, either
+# 'van der Waals' or 'Coulombic' static text, placed iteratively.
+# since they alternate, we take i mod 2, yielding either 0 or 1, which is the tuple index of
+# our desired string in the variable 'labelOptionsIntramolecular' about 8 lines above.
+labelsVdwCoulIntramolecular = []
+for i in range(maxNumberOfSpecies*2):
+    labelsVdwCoulIntramolecular.append(Widget(PanelTwoIntramolecular, \
+            widgetType = "static", name = labelOptionsIntramolecular[i%2],
+            pos = (i+5,2)))
+
+interactionsLabel12 = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "1-2 Scaling", pos = (4,3))
+interactionsLabel13 = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "1-3 Scaling", pos = (4,4))
+interactionsLabel14 = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "1-4 Scaling", pos = (4,5))
+interactionsLabel1N = Widget(PanelTwoIntramolecular, widgetType = "static", \
+        name = "1-N Scaling", pos = (4,6))
+
+# species 1,2,3,4,5,6 scaling for 1-2, 1-3, 1-4, 1-N interactions: these will be text widgets
+# so, we have 4 interaction scale factors for each [coulombic and vdw] interaction for
+# each species; thus, we need maxNumberOfSpecies * 4 * 2 textwidgets; at the time
+# of writing this comment, that is 6*4*2 = 48
+# so, we do it iteratively
+# however, it is easiest if we split up the vdw and the coulombic into separate lists
+
+
+# something to note: we need to assign dictionary keywords to each of these
+vdwScalingAllSpecies = []
+coulScalingAllSpecies = []
+
+
+
+
+
 
 
 
