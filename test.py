@@ -556,7 +556,8 @@ def defaultTextFunction(event):
     # -- in any case, we don't need to worry about it
     # this cleans up our dictionary if the user decides they don't need to use the value after all
     if not val:
-        del myDict[objKeyword]
+        if objKeyword in myDict.keys():
+            del myDict[objKeyword]
 
     print objKeyword, val
 
@@ -747,7 +748,7 @@ for widget in Widget._register:
 #       - Mixing Rule
 #       - Minimum Cutoff
 #       - Pair storage
-#       - Random Number seeds
+#       - Random Number seeds (Seed 1 and Seed 2)
 #       - Pressure
 #       - Box information (cubic/non-cubic, length or h-matrix), for boxes 1 and 2
 #       - CBMC parameters
@@ -814,11 +815,11 @@ CBMCLabel = Widget(PanelOnePageTwo, widgetType="static", name="CBMC Parameters",
         pos=(13,1))
 
 # "Trial Insertions" label and text widget
-TrialInsertionWidget = Widget(PanelOnePageTwo, widgetType="text", name="trialInsertions", \
+trialInsertionWidget = Widget(PanelOnePageTwo, widgetType="text", name="trialInsertions", \
         pos=(14,2), label="Trial Insertions: ", labelPos=(14,1))
 
 # "Rotational Bias" label and text widget
-RotationalBiasWidget = Widget(PanelOnePageTwo, widgetType="text", name="rotationalBias", \
+rotationalBiasWidget = Widget(PanelOnePageTwo, widgetType="text", name="rotationalBias", \
         pos=(15,2), label="Rotational Bias: ", labelPos=(15,1))
 
 # "Trial orientations" label and text widget
@@ -837,28 +838,259 @@ CBMCCutoffBox2 = Widget(PanelOnePageTwo, widgetType="text", name="cbmcCutoffB2",
 chemicalPotentialLabel = Widget(PanelOnePageTwo, widgetType = "static", \
         name="Chemical Potential (kJ/mol)", pos=(1,5), span=(1,2))
 
+# our label for species 1
+chemicalPotentialS1Label = Widget(PanelOnePageTwo, widgetType = "static", \
+        name = "Species 1: ", pos =(2,5))
+
+# our labels for species 2-6 (same process)..
+chemicalPotentialS2Label = Widget(PanelOnePageTwo, widgetType = "static", \
+        name = "Species 2: ", pos =(3,5))
+chemicalPotentialS3Label = Widget(PanelOnePageTwo, widgetType = "static", \
+        name = "Species 3: ", pos =(4,5))
+chemicalPotentialS4Label = Widget(PanelOnePageTwo, widgetType = "static", \
+        name = "Species 4: ", pos =(5,5))
+chemicalPotentialS5Label = Widget(PanelOnePageTwo, widgetType = "static", \
+        name = "Species 5: ", pos =(6,5))
+chemicalPotentialS6Label = Widget(PanelOnePageTwo, widgetType = "static", \
+        name = "Species 6: ", pos =(7,5))
+
 # Chemical potential prompts, for species 1-6 (## IMPORTANT -
 # if support for more than 6 species within the GUI is desired, must change that here)
 
+# the text widgets for species 1-6
+chemicalPotentialS1Widget = Widget(PanelOnePageTwo, widgetType = "text", \
+        name = "", pos = (2,6))
+chemicalPotentialS2Widget = Widget(PanelOnePageTwo, widgetType = "text", \
+        name = "", pos = (3,6))
+chemicalPotentialS3Widget = Widget(PanelOnePageTwo, widgetType = "text", \
+        name = "", pos = (4,6))
+chemicalPotentialS4Widget = Widget(PanelOnePageTwo, widgetType = "text", \
+        name = "", pos = (5,6))
+chemicalPotentialS5Widget = Widget(PanelOnePageTwo, widgetType = "text", \
+        name = "", pos = (6,6))
+chemicalPotentialS6Widget = Widget(PanelOnePageTwo, widgetType = "text", \
+        name = "", pos = (7,6))
 
-
-
-
-
-# this should be done iteratively, because. \TODO
 #### H-Matrix Frame objects & functions \TODO
+def destroyHMatrix(event):
+
+    # the user clicked 'Done', so destroy the Frame and its objects
+
+    # first, we get the object that received the event (the "Done" button)
+    obj = event.GetEventObject()
+
+    # get the object obj's parent frame
+    # obj is the "Done" button, whose parent is the Panel, whose parent is the Frame;
+    # we call the Close() function on the Frame object (i.e., destroy the top level object).
+    frameToBeClosed = obj.GetParent().GetParent()
+    frameToBeClosed.Close();
+
+def hMatrixFunction(event):
+
+    # get the button from which the event originated
+    obj = event.GetEventObject()
+
+    # get the dictionary keyword argument assigned to the H-Matrix Button
+    objKeyword = obj._dictKwarg
+
+    # objKeyword is either 'hmatrix box 1' or 'hmatrix box 2'
+    # so, splice the objKeyword and store the last index (either '1' or '2') in a new variable
+    thisBox = str(objKeyword[-1])
+
+    # now we need to spawn a frame
+    hMatrixFrame = Frame(None,"H Matrix",(360,300))
+    hMatrixPanel = Panel(hMatrixFrame)
+
+    # place the widgets on the frame
+    # first, an instructional label:
+    instructionsStringHMatrix = "Enter your H-Matrix vectors below."
+    instructionsHMatrix = Widget(hMatrixPanel, widgetType = "static", \
+            name = instructionsStringHMatrix, pos = (1,1), span = (1,4))
+
+    # now, more static widget labels - our x, y, and z director vectors
+    xTopLabelHMatrix = Widget(hMatrixPanel, widgetType = "static", \
+            name = "x", pos = (2,2))
+    yTopLabelHMatrix = Widget(hMatrixPanel, widgetType = "static", \
+            name = "y", pos = (2,3))
+    zTopLabelHMatrix = Widget(hMatrixPanel, widgetType = "static", \
+            name = "z", pos = (2,4))
+
+    # and x, y, z labels on the sides
+    xSideLabelHMatrix = Widget(hMatrixPanel, widgetType = "static", \
+            name = "x", pos = (3,1))
+    ySideLabelHMatrix = Widget(hMatrixPanel, widgetType = "static", \
+            name = "y", pos = (4,1))
+    zSideLabelHMatrix = Widget(hMatrixPanel, widgetType = "static", \
+            name = "z", pos = (5,1))
+
+    # the text widgets forming the h-matrix
+    #   xx    xy     xz
+    #   yx    yy     yz
+    #   zx    zy     zz
+
+    xxHMatrixTextWidget = Widget(hMatrixPanel, widgetType = "text", \
+            name = "", pos = (3,2))
+    xyHMatrixTextWidget = Widget(hMatrixPanel, widgetType = "text", \
+            name = "", pos = (3,3))
+    xzHMatrixTextWidget = Widget(hMatrixPanel, widgetType = "text", \
+            name = "", pos = (3,4))
+
+    yxHMatrixTextWidget = Widget(hMatrixPanel, widgetType = "text", \
+            name = "", pos = (4,2))
+    yyHMatrixTextWidget = Widget(hMatrixPanel, widgetType = "text", \
+            name = "", pos = (4,3))
+    yzHMatrixTextWidget = Widget(hMatrixPanel, widgetType = "text", \
+            name = "", pos = (4,4))
+
+    zxHMatrixTextWidget = Widget(hMatrixPanel, widgetType = "text", \
+            name = "", pos = (5,2))
+    zyHMatrixTextWidget = Widget(hMatrixPanel, widgetType = "text", \
+            name = "", pos = (5,3))
+    zzHMatrixTextWidget = Widget(hMatrixPanel, widgetType = "text", \
+            name = "", pos = (5,4))
+
+    # also, this is a Frame object, not a dialog (as with the simulation directory button)
+    # therefore, we need to add a button that destroys the frame when the user is done entering
+    # the information
+
+    doneButtonHMatrix = Widget(hMatrixPanel, widgetType = "button", \
+            name = "Done", pos = (7,4))
+
+    # we now have all of our widgets on the panel; assign dictionary keyword arguments
+    # to the relevant widgets (the widgets that will store or access data in dictionary 'myDict')
+    # for the h-matrix text widgets, assign it as the director vector  and the box number
+    xxHMatrixTextWidget.setDictKwarg("xx %s" %thisBox)
+    xyHMatrixTextWidget.setDictKwarg("xy %s" %thisBox)
+    xzHMatrixTextWidget.setDictKwarg("xz %s" %thisBox)
+    yxHMatrixTextWidget.setDictKwarg("yx %s" %thisBox)
+    yyHMatrixTextWidget.setDictKwarg("yy %s" %thisBox)
+    yzHMatrixTextWidget.setDictKwarg("yz %s" %thisBox)
+    zxHMatrixTextWidget.setDictKwarg("zx %s" %thisBox)
+    zyHMatrixTextWidget.setDictKwarg("zy %s" %thisBox)
+    zzHMatrixTextWidget.setDictKwarg("zz %s" %thisBox)
+
+    # these will all use the default text function
+    xxHMatrixTextWidget.setFunction(defaultTextFunction)
+    xyHMatrixTextWidget.setFunction(defaultTextFunction)
+    xzHMatrixTextWidget.setFunction(defaultTextFunction)
+    yxHMatrixTextWidget.setFunction(defaultTextFunction)
+    yyHMatrixTextWidget.setFunction(defaultTextFunction)
+    yzHMatrixTextWidget.setFunction(defaultTextFunction)
+    zxHMatrixTextWidget.setFunction(defaultTextFunction)
+    zyHMatrixTextWidget.setFunction(defaultTextFunction)
+    zzHMatrixTextWidget.setFunction(defaultTextFunction)
+
+    # assign the 'close' functionality to the 'Done' button
+    doneButtonHMatrix.setFunction(destroyHMatrix)
+
+    # initialize all the objects.
+    hMatrixFrame.initObj()
+
+    # now that we have all the objects instantiated, we can work with the wxWidgets objects
+
+    # we wish to populate the text widgets with their values if the user re-opens
+    # the window; so, look in myDict for the _dictKwarg assigned to each text widget; if it is
+    # in the dictionary, set the value of the textwidget to that value;
+    # else, set the value to an empty string
+
+    # there isn't a very elegant way to handle this; just copy and paste the same code for each widget
+    # we need to work with the wxWidget objects directly; access via ._obj syntax
+    if (("xx %s" %(thisBox)) in myDict.keys()):
+        xxHMatrixTextWidget._obj.SetValue(myDict["xx %s" %thisBox])
+    else:
+        xxHMatrixTextWidget._obj.SetValue('')
+    if (("xy %s" %(thisBox)) in myDict.keys()):
+        xyHMatrixTextWidget._obj.SetValue(myDict["xy %s" %thisBox])
+    else:
+        xyHMatrixTextWidget._obj.SetValue('')
+    if (("xz %s" %(thisBox)) in myDict.keys()):
+        xzHMatrixTextWidget._obj.SetValue(myDict["xz %s" %thisBox])
+    else:
+        xzHMatrixTextWidget._obj.SetValue('')
+
+    # and for our y[x,y,z] text widgets...
+    if (("yx %s" %(thisBox)) in myDict.keys()):
+        yxHMatrixTextWidget._obj.SetValue(myDict["yx %s" %thisBox])
+    else:
+        yxHMatrixTextWidget._obj.SetValue('')
+    if (("yy %s" %(thisBox)) in myDict.keys()):
+        yyHMatrixTextWidget._obj.SetValue(myDict["yy %s" %thisBox])
+    else:
+        yyHMatrixTextWidget._obj.SetValue('')
+    if (("yz %s" %(thisBox)) in myDict.keys()):
+        yzHMatrixTextWidget._obj.SetValue(myDict["yz %s" %thisBox])
+    else:
+        yzHMatrixTextWidget._obj.SetValue('')
+
+    # and for our z[x,y,z] text widgets...
+    if (("zx %s" %(thisBox)) in myDict.keys()):
+        zxHMatrixTextWidget._obj.SetValue(myDict["zx %s" %thisBox])
+    else:
+        zxHMatrixTextWidget._obj.SetValue('')
+    if (("zy %s" %(thisBox)) in myDict.keys()):
+        zyHMatrixTextWidget._obj.SetValue(myDict["zy %s" %thisBox])
+    else:
+        zyHMatrixTextWidget._obj.SetValue('')
+    if (("zz %s" %(thisBox)) in myDict.keys()):
+        zzHMatrixTextWidget._obj.SetValue(myDict["zz %s" %thisBox])
+    else:
+        zzHMatrixTextWidget._obj.SetValue('')
+
+    # and that concludes the hMatrix panels.  note that this handles both
+    # the box 1 and box 2 h matrix stuff.
 
 
-
-
-
-
-
+#########################################################
+# Set the dictionary kwargs for the widgets on this panel
+#########################################################
+temperatureWidget.setDictKwarg("temperature")
+mixingRuleWidget.setDictKwarg("mixingRule")
+cutoffWidget.setDictKwarg("rCutoffLow")
+pairStorageWidget.setDictKwarg("pairStorage")
+seed1Widget.setDictKwarg("seed1")
+seed2Widget.setDictKwarg("seed2")
+box1ShapeChoice.setDictKwarg("box1Shape")
+box2ShapeChoice.setDictKwarg("box2Shape")
+trialInsertionWidget.setDictKwarg("trialInsertions")
+rotationalBiasWidget.setDictKwarg("rotationalBias")
+trialOrientationsWidget.setDictKwarg("trialOrientations")
+CBMCCutoffBox1.setDictKwarg("cbmcCutoffBox1")
+CBMCCutoffBox2.setDictKwarg("cbmcCutoffBox2")
+box1HMatrix.setDictKwarg("hmatrix box 1")
+box2HMatrix.setDictKwarg("hmatrix box 2")
+chemicalPotentialS1Widget.setDictKwarg("chemPot S1")
+chemicalPotentialS2Widget.setDictKwarg("chemPot S2")
+chemicalPotentialS3Widget.setDictKwarg("chemPot S3")
+chemicalPotentialS4Widget.setDictKwarg("chemPot S4")
+chemicalPotentialS5Widget.setDictKwarg("chemPot S5")
+chemicalPotentialS6Widget.setDictKwarg("chemPot S6")
 
 # bind the widgets on this panel to functions as needed
+temperatureWidget.setFunction(defaultTextFunction)
+mixingRuleWidget.setFunction(defaultChoiceFunction)
+cutoffWidget.setFunction(defaultTextFunction)
+pairStorageWidget.setFunction(defaultChoiceFunction)
+seed1Widget.setFunction(defaultTextFunction)
+seed2Widget.setFunction(defaultTextFunction)
+box1ShapeChoice.setFunction(defaultChoiceFunction)
+box2ShapeChoice.setFunction(defaultChoiceFunction)
+trialInsertionWidget.setFunction(defaultTextFunction)
+rotationalBiasWidget.setFunction(defaultTextFunction)
+trialOrientationsWidget.setFunction(defaultTextFunction)
+CBMCCutoffBox1.setFunction(defaultTextFunction)
+CBMCCutoffBox2.setFunction(defaultTextFunction)
+box1HMatrix.setFunction(hMatrixFunction)
+box2HMatrix.setFunction(hMatrixFunction)
+chemicalPotentialS1Widget.setFunction(defaultTextFunction)
+chemicalPotentialS2Widget.setFunction(defaultTextFunction)
+chemicalPotentialS3Widget.setFunction(defaultTextFunction)
+chemicalPotentialS4Widget.setFunction(defaultTextFunction)
+chemicalPotentialS5Widget.setFunction(defaultTextFunction)
+chemicalPotentialS6Widget.setFunction(defaultTextFunction)
 
 
-# show/hide dynamics
+
+# show/hide dynamics \TODO
 
 
 ######################################################################################
