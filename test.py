@@ -494,8 +494,8 @@ PanelOnePageOne = Panel(PanelOneNotebook,name="Page 1")
 PanelOnePageTwo = Panel(PanelOneNotebook,name="Page 2")
 
 # the pages of the panel two notebook, "Interaction Parameters"
-PanelTwoIntramolecular = Panel(PanelTwoNotebook,name="Intramolecular")
 PanelTwoIntermolecular = Panel(PanelTwoNotebook,name="Intermolecular")
+PanelTwoIntramolecular = Panel(PanelTwoNotebook,name="Intramolecular")
 
 # the pages of the panel three notebook, "Probabilities Information"
 PanelThreeTranslation = Panel(PanelThreeNotebook,name="Translation")
@@ -637,7 +637,7 @@ makeInputFileWidget = Widget(PanelOnePageOne,widgetType="button",name="Create In
         pos=(12,2))
 
 # our string indicating that further navigation of the GUI requires our above prompts to be answered
-# P.S., if anyone can figure out how to make this bold, kudos
+# P.S., if anyone can figure out how to make this bold font, kudos
 string0 = "Please provide the following information before continuing."
 
 provideInformationText = Widget(PanelOnePageOne,widgetType="static",name=string0, \
@@ -679,6 +679,8 @@ def simDirFunction(event):
             style = wx.DD_DEFAULT_STYLE)
 
     # once the user has navigated to the appropriate directory and pressed OK,
+    # some wx.DirDialog methods are used: .ShowModal(), .GetPath();
+    # refer to documentation to see what they do
     if dlg.ShowModal() == wx.ID_OK:
         val = dlg.GetPath()
     else:
@@ -1121,65 +1123,187 @@ vdwLogicalChoices = ["","TRUE"]
 chargeFunctionalFormChoices = ["","Coulombic","None"]
 chargeMethodChoices = ["","Ewald","cut"]
 
+# all widgets will be placed on 'PanelTwoIntermolecular'
+
 # vdw style label
+vdwStyleLabel = Widget(PanelTwoIntermolecular, widgetType = "static", \
+        name = "van der Waals Style", pos = (1,1), span = (1,2))
 
 # Box 1 label - vdw style
+vdwBox1Label  = Widget(PanelTwoIntermolecular, widgetType = "static", \
+        name = "Box 1: ", pos = (3,1))
 
 # Box 2 label - vdw style
+vdwBox2Label  = Widget(PanelTwoIntermolecular, widgetType = "static", \
+        name = "Box 2: ", pos = (6,1))
 
-# box 1 functional form, vdw style
+# box 1 functional form, vdw style, with label
+vdwBox1FunctionalStyle = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (3,2), label = "Functional Form", labelPos = (2,2), \
+        choices = vdwFunctionalFormChoices)
 
 # box 1 tail correction, vdw style
+vdwBox1TailCorrection = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (3,3), label = "Tail Correction", labelPos = (2,3), \
+        choices = vdwTailCorrectionChoices)
 
 # box 1 cutoff, vdw style
+# separate the label from the text widget this time, because the label will change
+# according to the user's selection in the Tail Correction choice widget
+vdwBox1Cutoff = Widget(PanelTwoIntermolecular, widgetType = "text", \
+        name = "", pos = (3,4))
+vdwBox1CutoffLabel = Widget(PanelTwoIntermolecular, widgetType = "static", \
+        name = "Cutoff (%s)" %angstrom, pos = (2,4))
+
 
 # box 1 spline off, vdw style
+# here we can neglect separating the label from the text widget because it will only be spline off
+vdwBox1SplineOff = Widget(PanelTwoIntermolecular, widgetType = "text", \
+        name = "", pos =(3,5), label = "Spline Off (%s)" %angstrom, \
+        labelPos = (2,5))
 
 # box 1 logical, vdw style
-
+vdwBox1Logical = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (3,6), label = "Logical (Optional)", \
+        labelPos = (2,6), choices = vdwLogicalChoices)
 
 
 # box 2 functional form, vdw style
+vdwBox2FunctionalStyle = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (6,2), label = "Functional Form", labelPos = (5,2), \
+        choices = vdwFunctionalFormChoices)
 
 # box 2 tail correction, vdw style
+vdwBox2TailCorrection = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (6,3), label = "Tail Correction", labelPos = (5,3), \
+        choices = vdwTailCorrectionChoices)
 
 # box 2 cutoff, vdw style
+vdwBox2Cutoff = Widget(PanelTwoIntermolecular, widgetType = "text", \
+        name = "", pos = (6,4))
+vdwBox2CutoffLabel = Widget(PanelTwoIntermolecular, widgetType = "static", \
+        name = "Cutoff (%s)" %angstrom, pos = (5,4))
 
 # box 2 spline off, vdw style
+vdwBox2SplineOff = Widget(PanelTwoIntermolecular, widgetType = "text", \
+        name = "", pos =(6,5), label = "Spline Off (%s)" %angstrom, \
+        labelPos = (5,5))
 
 # box 2 logical, vdw style
-
+vdwBox2Logical = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (6,6), label = "Logical (Optional)", \
+        labelPos = (5,6), choices = vdwLogicalChoices)
 
 
 # charge style label
+chargeStyleLabel = Widget(PanelTwoIntermolecular, widgetType = "static", \
+        name = "Charge Style", pos = (8,1))
 
 # box 1 label - charge style
+box1ChargeStyleLabel = Widget(PanelTwoIntermolecular, widgetType = "static", \
+        name = "Box 1: ", pos = (10,1))
 
 # box 2 label - charge style
-
+box2ChargeStyleLabel = Widget(PanelTwoIntermolecular, widgetType = "static", \
+        name = "Box 2: ", pos = (13,1))
 
 # box 1 functional form - charge style
+box1ChargeFF = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (10,2), label = "Functional Form", labelPos = (9,2), \
+        choices = chargeFunctionalFormChoices)
 
 # box 1 method - charge style
+box1ChargeMethod = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (10,3), label = "Method", labelPos = (9,3), \
+        choices = chargeMethodChoices)
 
 # box 1 cutoff - charge style
+box1ChargeCutoff = Widget(PanelTwoIntermolecular, widgetType = "text", \
+        name = "", pos = (10,4), label = "Cutoff (%s)" %angstrom, \
+        labelPos = (9,4))
 
 # box 1 accuracy - charge style
+box1ChargeAccuracy = Widget(PanelTwoIntermolecular, widgetType = "text", \
+        name = "", pos = (10,5), label = "Accuracy", labelPos = (9,5))
 
 # box 2 functional form - charge style
+box2ChargeFF = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (13,2), label = "Functional Form", labelPos = (12,2), \
+        choices = chargeFunctionalFormChoices)
 
 # box 2 method - charge style
+box2ChargeMethod = Widget(PanelTwoIntermolecular, widgetType = "choice", \
+        name = "", pos = (13,3), label = "Method", labelPos = (12,3), \
+        choices = chargeMethodChoices)
 
 # box 2 cutoff - charge style
+box2ChargeCutoff = Widget(PanelTwoIntermolecular, widgetType = "text", \
+        name = "", pos = (13,4), label = "Cutoff (%s)" %angstrom, \
+        labelPos = (12,4))
 
 # box 2 accuracy - charge style
+box2ChargeAccuracy = Widget(PanelTwoIntermolecular, widgetType = "text", \
+        name = "", pos = (13,5), label = "Accuracy", labelPos = (12,5))
 
 
+#############################################################
+# assign dictionary keyword arguments to the assorted widgets
+#############################################################
+# first, our vdw box 1
+vdwBox1FunctionalStyle.setDictKwarg("box 1 vdw functional")
+vdwBox1TailCorrection.setDictKwarg("box 1 vdw tail")
+vdwBox1Cutoff.setDictKwarg("box 1 spline on")
+vdwBox1SplineOff.setDictKwarg("box 1 spline off")
+vdwBox1Logical.setDictKwarg("box 1 logical")
+
+# next, vdw box 2
+vdwBox2FunctionalStyle.setDictKwarg("box 2 vdw functional")
+vdwBox2TailCorrection.setDictKwarg("box 2 vdw tail")
+vdwBox2Cutoff.setDictKwarg("box 2 spline on")
+vdwBox2SplineOff.setDictKwarg("box 2 spline off")
+vdwBox2Logical.setDictKwarg("box 2 logical")
+
+# next, charge style box 1
+box1ChargeFF.setDictKwarg("box 1 charge functional")
+box1ChargeMethod.setDictKwarg("box 1 charge method")
+box1ChargeCutoff.setDictKwarg("box 1 charge cutoff")
+box1ChargeAccuracy.setDictKwarg("box 1 ewald accuracy")
+
+# finally, charge style box 2
+box2ChargeFF.setDictKwarg("box 2 charge functional")
+box2ChargeMethod.setDictKwarg("box 2 charge method")
+box2ChargeCutoff.setDictKwarg("box 2 charge cutoff")
+box2ChargeAccuracy.setDictKwarg("box 2 ewald accuracy")
 
 # and functions for the various widgets
+vdwBox1FunctionalStyle.setFunction(defaultChoiceFunction)
+vdwBox1TailCorrection.setFunction(defaultChoiceFunction)
+vdwBox1Cutoff.setFunction(defaultTextFunction)
+vdwBox1SplineOff.setFunction(defaultTextFunction)
+vdwBox1Logical.setFunction(defaultTextFunction)
+
+vdwBox2FunctionalStyle.setFunction(defaultChoiceFunction)
+vdwBox2TailCorrection.setFunction(defaultChoiceFunction)
+vdwBox2Cutoff.setFunction(defaultTextFunction)
+vdwBox2SplineOff.setFunction(defaultTextFunction)
+vdwBox2Logical.setFunction(defaultTextFunction)
+
+box1ChargeFF.setFunction(defaultChoiceFunction)
+box1ChargeMethod.setFunction(defaultChoiceFunction)
+box1ChargeCutoff.setFunction(defaultTextFunction)
+box1ChargeAccuracy.setFunction(defaultTextFunction)
+
+box2ChargeFF.setFunction(defaultChoiceFunction)
+box2ChargeMethod.setFunction(defaultChoiceFunction)
+box2ChargeCutoff.setFunction(defaultTextFunction)
+box2ChargeAccuracy.setFunction(defaultTextFunction)
 
 
-# show/hide dynamics
+
+
+
+
+# show/hide dynamics TODO
 
 
 ######################################################################################
