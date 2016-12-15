@@ -1703,7 +1703,6 @@ s5RegrowthWidget.setFunction(defaultTextFunction)
 s6RegrowthWidget.setFunction(defaultTextFunction)
 
 # show/hide functionality
-# functionality
 
 
 ######################################################################################
@@ -1712,16 +1711,46 @@ s6RegrowthWidget.setFunction(defaultTextFunction)
 
 # "Please note that the sum of the move probabilities across all move types must
 # sum to 1." label
+P3VolumeString1 = "Please note that the sum of the move probabilities " + \
+        "across all move types must sum to 1."
+P3VolumeString1Label = Widget(PanelThreeVolume, widgetType = "static", \
+        name = P3VolumeString1, pos = (1,2), span = (1,6))
 
+P3VolumeString2 = "Enter the maximum volume displacements in " + \
+        " %s^3 for the simulation box(es) below" %angstrom
+P3VolumeString2Label = Widget(PanelThreeVolume, widgetType = "static", \
+        name = P3VolumeString2, pos = (3,2), span = (1,6))
 
+P3VolumeString3 = "This flag is required for NPT-MC, GEMC-NPT, and " + \
+        "GEMC-NVT simulations, and may not be used for other simulation types."
+P3VolumeString3Label = Widget(PanelThreeVolume, widgetType = "static", \
+        name = P3VolumeString3, pos = (4,2), span = (1,8))
 
+moveProbabilityVolumeLabel = Widget(PanelThreeVolume, widgetType = "static", \
+        name = "Move Probability: ", pos = (0,2))
+moveProbabilityVolumeWidget = Widget(PanelThreeVolume, widgetType = "text", \
+        name = "", pos = (0,3))
+# box 1 label
+box1VolumeLabel = Widget(PanelThreeVolume, widgetType = "static", \
+        name = "Box 1: ", pos = (5,2))
+box2VolumeLabel = Widget(PanelThreeVolume, widgetType = "static", \
+        name = "Box 2: ", pos = (6,2))
+box1VolumeWidget = Widget(PanelThreeVolume, widgetType = "text", \
+        name = "", pos = (5,3))
+box2VolumeWidget = Widget(PanelThreeVolume, widgetType = "text", \
+        name = "", pos = (6,3))
 
+# set the dictionary keyword arguments
+moveProbabilityVolumeWidget.setDictKwarg("prob vol")
+box1VolumeWidget.setDictKwarg("prob vol b1")
+box2VolumeWidget.setDictKwarg("prob vol b2")
 
+# set the functionality
+moveProbabilityVolumeWidget.setFunction(defaultTextFunction)
+box1VolumeWidget.setFunction(defaultTextFunction)
+box2VolumeWidget.setFunction(defaultTextFunction)
 
-# Enter the maximum volume displacements in A^3 for the simulation box(es) below."
-
-#
-
+# show/ hide stuff TODO
 
 ######################################################################################
 # SECTION 4.9: Addition of widgets to PanelThreeInsertion
@@ -1729,9 +1758,78 @@ s6RegrowthWidget.setFunction(defaultTextFunction)
 
 # "Please note that the sum of the move probabilities across all move types must
 # sum to 1." label
+P3InsertionString1 = "Please note that the sum of the move probabilities " + \
+        "across all move types must sum to 1."
+P3InsertionString1Label = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = P3InsertionString1, pos = (1,2), span = (1,6))
 
+# another string to be placed on the panel
+P3InsertionString2 = "Additionally, insertion moves define an equal probability of " + \
+        "deletion, and so this probability should be counted twice when summing to 1."
+P3InsertionString2Label = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = P3InsertionString2, pos = (2,2), span = (2,6))
 
+# another string to be placed on the panel...
+P3InsertionString3 = "This flag is allowed only for GCMC simulations."
+P3InsertionString3Label = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = P3InsertionString3, pos = (8,4), span = (1,6))
 
+# and we prompt for the probability of an insertion (deletion) move to occur
+moveProbabilityInsertionLabel = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = "Move Probability: ", pos = (0,2))
+moveProbabilityInsertionWidget = Widget(PanelThreeInsertion, widgetType = "text", \
+        name = "", pos = (0,3))
+
+# our choices for the insertion method are as follows
+insertionChoiceOptions = ["", "cbmc", "none"]
+
+# the species 1 - 6 labels
+s1InsertionLabel = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = "Species 1: ", pos = (5,2))
+s2InsertionLabel = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = "Species 2: ", pos = (6,2))
+s3InsertionLabel = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = "Species 3: ", pos = (7,2))
+s4InsertionLabel = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = "Species 4: ", pos = (8,2))
+s5InsertionLabel = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = "Species 5: ", pos = (9,2))
+s6InsertionLabel = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = "Species 6: ", pos = (10,2))
+
+# choice widgets for each species
+s1InsertionWidget = Widget(PanelThreeInsertion, widgetType = "choice", \
+        name = "", pos = (5,3), choices = insertionChoiceOptions)
+s2InsertionWidget = Widget(PanelThreeInsertion, widgetType = "choice", \
+        name = "", pos = (6,3), choices = insertionChoiceOptions)
+s3InsertionWidget = Widget(PanelThreeInsertion, widgetType = "choice", \
+        name = "", pos = (7,3), choices = insertionChoiceOptions)
+s4InsertionWidget = Widget(PanelThreeInsertion, widgetType = "choice", \
+        name = "", pos = (8,3), choices = insertionChoiceOptions)
+s5InsertionWidget = Widget(PanelThreeInsertion, widgetType = "choice", \
+        name = "", pos = (9,3), choices = insertionChoiceOptions)
+s6InsertionWidget = Widget(PanelThreeInsertion, widgetType = "choice", \
+        name = "", pos = (10,3), choices = insertionChoiceOptions)
+
+# assign dictionary keyword arguments to the text and choice widgets
+moveProbabilityInsertionWidget.setDictKwarg("prob insertion")
+s1InsertionWidget.setDictKwarg("insertion method s1")
+s2InsertionWidget.setDictKwarg("insertion method s2")
+s3InsertionWidget.setDictKwarg("insertion method s3")
+s4InsertionWidget.setDictKwarg("insertion method s4")
+s5InsertionWidget.setDictKwarg("insertion method s5")
+s6InsertionWidget.setDictKwarg("insertion method s6")
+
+# set the functions
+moveProbabilityInsertionWidget.setFunction(defaultTextFunction)
+s1InsertionWidget.setFunction(defaultChoiceFunction)
+s2InsertionWidget.setFunction(defaultChoiceFunction)
+s3InsertionWidget.setFunction(defaultChoiceFunction)
+s4InsertionWidget.setFunction(defaultChoiceFunction)
+s5InsertionWidget.setFunction(defaultChoiceFunction)
+s6InsertionWidget.setFunction(defaultChoiceFunction)
+
+# show/hide functionality
 
 ######################################################################################
 # SECTION 4.10: Addition of widgets to PanelThreeSwap
@@ -1739,18 +1837,71 @@ s6RegrowthWidget.setFunction(defaultTextFunction)
 
 # "Please note that the sum of the move probabilities across all move types must
 # sum to 1." label
+P3SwapString1 = "Please note that the sum of the move probabilities across " + \
+        "all move types must sum to 1."
+P3SwapString1Label = Widget(PanelThreeSwap, widgetType = "static", \
+        name = P3SwapString1, pos = (1,2), span = (1,6))
 
+P3SwapString2 = "This flag is allowed only for GEMC simulations."
+P3SwapString2Label = Widget(PanelThreeSwap, widgetType = "static", \
+        name = P3SwapString2, pos = (8,4), span = (1,6))
 
+P3SwapString3 = "Select the swap method for each relevant species in the simulation below."
+P3SwapString3Label = Widget(PanelThreeSwap, widgetType = "static", \
+        name = P3SwapString3, pos = (3,2), span = (1,6))
 
+moveProbabilitySwapLabel = Widget(PanelThreeSwap, widgetType = "static", \
+        name = "Move Probability: ", pos = (0,2))
+moveProbabilitySwapWidget = Widget(PanelThreeSwap, widgetType = "text", \
+        name = "", pos = (0,3))
 
-######################################################################################
-# SECTION 4.10: Addition of widgets to PanelThreeSwap
-######################################################################################
+swapChoiceOptions = ["", "reservoir", "none"]
 
-# "Please note that the sum of the move probabilities across all move types must
-# sum to 1." label
+# species 1-6 labels
+s1SwapLabel = Widget(PanelThreeSwap, widgetType = "static", \
+        name = "Species 1: ", pos = (5,2))
+s2SwapLabel = Widget(PanelThreeSwap, widgetType = "static", \
+        name = "Species 2: ", pos = (6,2))
+s3SwapLabel = Widget(PanelThreeSwap, widgetType = "static", \
+        name = "Species 3: ", pos = (7,2))
+s4SwapLabel = Widget(PanelThreeSwap, widgetType = "static", \
+        name = "Species 4: ", pos = (8,2))
+s5SwapLabel = Widget(PanelThreeSwap, widgetType = "static", \
+        name = "Species 5: ", pos = (9,2))
+s6SwapLabel = Widget(PanelThreeSwap, widgetType = "static", \
+        name = "Species 6: ", pos = (10,2))
 
+# choice widgets
+s1SwapChoice = Widget(PanelThreeSwap, widgetType = "choice", \
+        name = "", pos = (5,3), choices = swapChoiceOptions)
+s2SwapChoice = Widget(PanelThreeSwap, widgetType = "choice", \
+        name = "", pos = (6,3), choices = swapChoiceOptions)
+s3SwapChoice = Widget(PanelThreeSwap, widgetType = "choice", \
+        name = "", pos = (7,3), choices = swapChoiceOptions)
+s4SwapChoice = Widget(PanelThreeSwap, widgetType = "choice", \
+        name = "", pos = (8,3), choices = swapChoiceOptions)
+s5SwapChoice = Widget(PanelThreeSwap, widgetType = "choice", \
+        name = "", pos = (9,3), choices = swapChoiceOptions)
+s6SwapChoice = Widget(PanelThreeSwap, widgetType = "choice", \
+        name = "", pos = (10,3), choices = swapChoiceOptions)
 
+# set dictionary keyword arguments
+moveProbabilitySwapWidget.setDictKwarg("prob swap")
+s1SwapChoice.setDictKwarg("swap method s1")
+s2SwapChoice.setDictKwarg("swap method s2")
+s3SwapChoice.setDictKwarg("swap method s3")
+s4SwapChoice.setDictKwarg("swap method s4")
+s5SwapChoice.setDictKwarg("swap method s5")
+s6SwapChoice.setDictKwarg("swap method s6")
+
+# set functionality
+moveProbabilitySwapWidget.setFunction(defaultTextFunction)
+s1SwapChoice.setFunction(defaultChoiceFunction)
+s2SwapChoice.setFunction(defaultChoiceFunction)
+s3SwapChoice.setFunction(defaultChoiceFunction)
+s4SwapChoice.setFunction(defaultChoiceFunction)
+s5SwapChoice.setFunction(defaultChoiceFunction)
+s6SwapChoice.setFunction(defaultChoiceFunction)
 
 
 
