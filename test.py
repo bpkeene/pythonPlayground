@@ -423,10 +423,8 @@ class Widget:
         elif (self._widgetType == "static"):
             self._obj = wx.StaticText(parentInstance,label=self._name, name=self._name)
             self._wxEvt = None
-           # if (self._fontOptions is not None):
-           #     self._obj.SetFont(wx.Font(self._fontOptions))
 
-        # all widgets with which we interact will store there data in the global dictionary;
+        # all widgets with which we interact will store their data in the global dictionary;
         # access to this dictionary is controlled by the _dictKwarg attribute
         # this attribute must be appended to the wxWidget object, because I can't figure out
         # how to refer back to the base Widget class instance once we make the wxWidget swig object
@@ -539,7 +537,7 @@ def defaultTextFunction(event):
     # ask the GUI what object received the event
     obj = event.GetEventObject();
 
-    # we added the dictKwarg as an attribute to the wxObject on instantiation, presumably
+    # we added the dictKwarg as an attribute to the wxObject on instantiation, presumably,
     # so, get the keyword that we will use for the dictionary
     objKeyword = obj._dictKwarg
 
@@ -722,9 +720,10 @@ def createInputFileFunction(event):
     # TODO super dooper important, pretty much the reason for the whole thing
     pass
 
-#################################################
+#######################################################################################
 # set the functions to which these widgets will respond; some of them will be standard,
 # others are specific to a given widget
+#######################################################################################
 runNameWidget.setFunction(defaultTextFunction)
 simulationDirectoryWidget.setFunction(simDirFunction)
 numberOfSpeciesWidget.setFunction(defaultChoiceFunction)
@@ -1386,7 +1385,7 @@ interactionsLabel1N = Widget(PanelTwoIntramolecular, widgetType = "static", \
 # something to note: we need to assign dictionary keywords to each of these
 vdwScalingAllSpecies = []
 coulScalingAllSpecies = []
-
+# \TODO
 
 
 
@@ -1400,58 +1399,120 @@ coulScalingAllSpecies = []
 
 # "Please note that the sum of the move probabilities across all move types must
 # sum to 1." label
+P3TranslationString1 = "Please note that the sum of the move " + \
+        "probabilities across all move types must sum to 1."
+
+P3TranslationLabel1 = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = P3TranslationString1, pos = (1,2), span = (1,6))
 
 # "Enter the maximum displacement %s allowed for each species in each box below"
 # %(angstrom). label
+P3TranslationString2 = "Enter the maximum displacement (%s) allowed " %angstrom + \
+        "for each species in each box below."
+P3TranslationLabel2 = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = P3TranslationString2, pos = (3,2), span = (1,6))
 
-# Move probability widget
+# Move probability widget and label
+moveProbabilityTranslationLabel = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = "Move Probability: ", pos = (0,2))
+moveProbabilityTranslationWidget = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (0,3))
 
 # Species 1: label
-
+s1TranslationLabel = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = "Species 1: ", pos = (5,2))
 # Species 2: label
-
+s2TranslationLabel = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = "Species 2: ", pos = (6,2))
 # Species 3: label
-
+s3TranslationLabel = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = "Species 3: ", pos = (7,2))
 # Species 4: label
-
+s4TranslationLabel = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = "Species 4: ", pos = (8,2))
 # Species 5: label
-
+s5TranslationLabel = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = "Species 5: ", pos = (9,2))
 # Species 6: label
-
+s6TranslationLabel = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = "Species 6: ", pos = (10,2))
 # Box 1 label
-
+box1TranslationLabel = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = "Box 1", pos = (4,3))
 # Box 2 label
+box2TranslationLabel = Widget(PanelThreeTranslation, widgetType = "static", \
+        name = "Box 2", pos =(4,4))
 
 # species 1 box 1 text widget
-
+s1b1Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (5,3))
 # species 1 box 2 text widget
-
+s1b2Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (5,4))
 # species 2 box 1 text widget
-
+s2b1Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (6,3))
 # species 2 box 2 text widget
-
+s2b2Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (6,4))
 # species 3 box 1 text widget
-
+s3b1Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (7,3))
 # species 3 box 2 text widget
-
+s3b2Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (7,4))
 # species 4 box 1 text widget
+s4b1Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (8,3))
 
 # species 4 box 2 text widget
-
+s4b2Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (8,4))
 # species 5 box 1 text widget
-
+s5b1Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (9,3))
 # species 5 box 2 text widget
-
+s5b2Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (9,4))
 # species 6 box 1 text widget
-
+s6b1Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (10,3))
 # species 6 box 2 text widget
+s6b2Translation = Widget(PanelThreeTranslation, widgetType = "text", \
+        name = "", pos = (10,4))
 
 
+# set the dictionary keywords for the text widgets on this panel
+moveProbabilityTranslationWidget.setDictKwarg("prob translation")
+s1b1Translation.setDictKwarg("prob trans s1 b1")
+s1b2Translation.setDictKwarg("prob trans s1 b2")
+s2b1Translation.setDictKwarg("prob trans s2 b1")
+s2b2Translation.setDictKwarg("prob trans s2 b2")
+s3b1Translation.setDictKwarg("prob trans s3 b1")
+s3b2Translation.setDictKwarg("prob trans s3 b2")
+s4b1Translation.setDictKwarg("prob trans s4 b1")
+s4b2Translation.setDictKwarg("prob trans s4 b2")
+s5b1Translation.setDictKwarg("prob trans s5 b1")
+s5b2Translation.setDictKwarg("prob trans s5 b2")
+s6b1Translation.setDictKwarg("prob trans s6 b1")
+s6b2Translation.setDictKwarg("prob trans s6 b2")
 
-# show/hide functionality
+# bind to functions
+moveProbabilityTranslationWidget.setFunction(defaultTextFunction)
+s1b1Translation.setFunction(defaultTextFunction)
+s1b2Translation.setFunction(defaultTextFunction)
+s2b1Translation.setFunction(defaultTextFunction)
+s2b2Translation.setFunction(defaultTextFunction)
+s3b1Translation.setFunction(defaultTextFunction)
+s3b2Translation.setFunction(defaultTextFunction)
+s4b1Translation.setFunction(defaultTextFunction)
+s4b2Translation.setFunction(defaultTextFunction)
+s5b1Translation.setFunction(defaultTextFunction)
+s5b2Translation.setFunction(defaultTextFunction)
+s6b1Translation.setFunction(defaultTextFunction)
+s6b2Translation.setFunction(defaultTextFunction)
 
-
-# functions etc.
+# show/hide functionality \TODO
 
 
 ######################################################################################
@@ -1460,38 +1521,113 @@ coulScalingAllSpecies = []
 
 # "Please note that the sum of the move probabilities across all move types must
 # sum to 1." label
+P3RotationString1 = "Please note that the sum of the move probabilities across " + \
+        "all move types must sum to 1."
+P3RotationString1Label = Widget(PanelThreeRotation, widgetType = "static", \
+        name = P3RotationString1, pos = (1,2), span = (1,6))
 
 # "Enter the maximum rotational width in degrees for each species in each box below"
 # label
+P3RotationString2 = "Enter the maximum rotational width in degrees for each " + \
+        "species in each box below."
+P3RotationString2Label = Widget(PanelThreeRotation, widgetType = "static", \
+        name = P3RotationString2, pos = (3,2), span = (1,6))
 
 # Move probability widget
+moveProbabilityRotationLabel = Widget(PanelThreeRotation, widgetType = "static", \
+        name = "Move Probability: ", pos = (0,2))
+moveProbabilityRotationWidget = Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (0,3))
 
 # Species 1 label
-# .....
-
-
+s1RotationLabel = Widget(PanelThreeRotation, widgetType = "static", \
+        name = "Species 1: ", pos = (5,2))
+#....
+s2RotationLabel = Widget(PanelThreeRotation, widgetType = "static", \
+        name = "Species 2: ", pos = (6,2))
+s3RotationLabel = Widget(PanelThreeRotation, widgetType = "static", \
+        name = "Species 3: ", pos = (7,2))
+s4RotationLabel = Widget(PanelThreeRotation, widgetType = "static", \
+        name = "Species 4: ", pos = (8,2))
+s5RotationLabel = Widget(PanelThreeRotation, widgetType = "static", \
+        name = "Species 5: ", pos = (9,2))
+s6RotationLabel = Widget(PanelThreeRotation, widgetType = "static", \
+        name = "Species 6: ", pos = (10,2))
 
 # Box 1 Label
-
+box1RotationLabel = Widget(PanelThreeRotation, widgetType = "static", \
+        name = "Box 1", pos = (4,3))
 # box 2 label
+box2RotationLabel = Widget(PanelThreeRotation, widgetType = "static", \
+        name = "Box 2", pos = (4,4))
 
 # s1 b1 text widget
 
+s1b1Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (5,3))
 # s1 b2 text widget
 
-# s2 b1 text widget
+s1b2Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (5,4))
+s2b1Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (6,3))
+s2b2Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (6,4))
+s3b1Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (7,3))
+s3b2Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (7,4))
+s4b1Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (8,3))
+s4b2Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (8,4))
+s5b1Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (9,3))
+s5b2Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (9,4))
+s6b1Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (10,3))
+s6b2Rotation= Widget(PanelThreeRotation, widgetType = "text", \
+        name = "", pos = (10,4))
 
-# s2 b2 text widget
+# set the dictionary keywords
+moveProbabilityRotationWidget.setDictKwarg("prob rotation")
+s1b1Rotation.setDictKwarg("prob rot s1 b1")
+s1b2Rotation.setDictKwarg("prob rot s1 b2")
+s2b1Rotation.setDictKwarg("prob rot s2 b1")
+s2b2Rotation.setDictKwarg("prob rot s2 b2")
+s3b1Rotation.setDictKwarg("prob rot s3 b1")
+s3b2Rotation.setDictKwarg("prob rot s3 b2")
+s4b1Rotation.setDictKwarg("prob rot s4 b1")
+s4b2Rotation.setDictKwarg("prob rot s4 b2")
+s5b1Rotation.setDictKwarg("prob rot s5 b1")
+s5b2Rotation.setDictKwarg("prob rot s5 b2")
+s6b1Rotation.setDictKwarg("prob rot s6 b1")
+s6b2Rotation.setDictKwarg("prob rot s6 b2")
 
-# ......
+
+# set functionality
+moveProbabilityRotationWidget.setFunction(defaultTextFunction)
+s1b1Rotation.setFunction(defaultTextFunction)
+s1b2Rotation.setFunction(defaultTextFunction)
+
+s2b1Rotation.setFunction(defaultTextFunction)
+s2b2Rotation.setFunction(defaultTextFunction)
+
+s3b1Rotation.setFunction(defaultTextFunction)
+s3b2Rotation.setFunction(defaultTextFunction)
+
+s4b1Rotation.setFunction(defaultTextFunction)
+s4b2Rotation.setFunction(defaultTextFunction)
+
+s5b1Rotation.setFunction(defaultTextFunction)
+s5b2Rotation.setFunction(defaultTextFunction)
+
+s6b1Rotation.setFunction(defaultTextFunction)
+s6b2Rotation.setFunction(defaultTextFunction)
 
 
-# show/hide functionality
-
-
-# functionality
-
-
+# implement show/hide TODO
 
 ######################################################################################
 # SECTION 4.7: Addition of widgets to PanelThreeRegrowth
@@ -1499,19 +1635,74 @@ coulScalingAllSpecies = []
 
 # "Please note that the sum of the move probabilities across all move types must
 # sum to 1." label
+P3RegrowthString1 = "Please note that the sum of the move " + \
+        "probabilities across all move types must sum to 1."
+P3RegrowthString1Label = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = P3RegrowthString1, pos = (1,2), span = (1,6))
 
 # "Enter the relative probablity of regrowth for each species below." label
+P3RegrowthString2 = "Enter the relative probability of regrowth for each species below."
+P3RegrowthString2Label = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = P3RegrowthString2, pos = (3,2), span = (1,6))
 
 # "Note that the relative probabilities below must sum to 1." label
+P3RegrowthString3 = "Note that the relative probabilities below must sum to 1."
+P3RegrowthString3Label = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = P3RegrowthString3, pos = (4,2), span = (1,6))
+
+# move probability label and widget
+moveProbabilityRegrowthLabel = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = "Move Probability: ", pos = (0,2))
+moveProbabilityRegrowthWidget = Widget(PanelThreeRegrowth, widgetType = "text", \
+        name = "", pos = (0,3))
 
 # Species 1 textwidget and label
+s1RegrowthLabel = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = "Species 1: ", pos = (5,2))
+s2RegrowthLabel = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = "Species 2: ", pos = (6,2))
+s3RegrowthLabel = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = "Species 3: ", pos = (7,2))
+s4RegrowthLabel = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = "Species 4: ", pos = (8,2))
+s5RegrowthLabel = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = "Species 5: ", pos = (9,2))
+s6RegrowthLabel = Widget(PanelThreeRegrowth, widgetType = "static", \
+        name = "Species 6: ", pos = (10,2))
 
-# .... (to 6)
+# textwidgets
+s1RegrowthWidget = Widget(PanelThreeRegrowth, widgetType = "text", \
+        name = "", pos = (5,3))
+s2RegrowthWidget = Widget(PanelThreeRegrowth, widgetType = "text", \
+        name = "", pos = (6,3))
+s3RegrowthWidget = Widget(PanelThreeRegrowth, widgetType = "text", \
+        name = "", pos = (7,3))
+s4RegrowthWidget = Widget(PanelThreeRegrowth, widgetType = "text", \
+        name = "", pos = (8,3))
+s5RegrowthWidget = Widget(PanelThreeRegrowth, widgetType = "text", \
+        name = "", pos = (9,3))
+s6RegrowthWidget = Widget(PanelThreeRegrowth, widgetType = "text", \
+        name = "", pos = (10,3))
 
+# assign dictionary keyword arguments
+moveProbabilityRegrowthWidget.setDictKwarg("prob regrowth")
+s1RegrowthWidget.setDictKwarg("prob regrowth s1")
+s2RegrowthWidget.setDictKwarg("prob regrowth s2")
+s3RegrowthWidget.setDictKwarg("prob regrowth s3")
+s4RegrowthWidget.setDictKwarg("prob regrowth s4")
+s5RegrowthWidget.setDictKwarg("prob regrowth s5")
+s6RegrowthWidget.setDictKwarg("prob regrowth s6")
+
+# set functions
+moveProbabilityRegrowthWidget.setFunction(defaultTextFunction)
+s1RegrowthWidget.setFunction(defaultTextFunction)
+s2RegrowthWidget.setFunction(defaultTextFunction)
+s3RegrowthWidget.setFunction(defaultTextFunction)
+s4RegrowthWidget.setFunction(defaultTextFunction)
+s5RegrowthWidget.setFunction(defaultTextFunction)
+s6RegrowthWidget.setFunction(defaultTextFunction)
 
 # show/hide functionality
-
-
 # functionality
 
 
@@ -1521,6 +1712,11 @@ coulScalingAllSpecies = []
 
 # "Please note that the sum of the move probabilities across all move types must
 # sum to 1." label
+
+
+
+
+
 
 # Enter the maximum volume displacements in A^3 for the simulation box(es) below."
 
