@@ -1616,19 +1616,14 @@ s6b2Rotation.setDictKwarg("prob rot s6 b2")
 moveProbabilityRotationWidget.setFunction(defaultTextFunction)
 s1b1Rotation.setFunction(defaultTextFunction)
 s1b2Rotation.setFunction(defaultTextFunction)
-
 s2b1Rotation.setFunction(defaultTextFunction)
 s2b2Rotation.setFunction(defaultTextFunction)
-
 s3b1Rotation.setFunction(defaultTextFunction)
 s3b2Rotation.setFunction(defaultTextFunction)
-
 s4b1Rotation.setFunction(defaultTextFunction)
 s4b2Rotation.setFunction(defaultTextFunction)
-
 s5b1Rotation.setFunction(defaultTextFunction)
 s5b2Rotation.setFunction(defaultTextFunction)
-
 s6b1Rotation.setFunction(defaultTextFunction)
 s6b2Rotation.setFunction(defaultTextFunction)
 
@@ -2029,6 +2024,9 @@ def MCFButtonFunction(event):
 
     # the species number, as identified by the object that received the event
     thisSpeciesNum = int(obj._dictKwarg[-1])
+    # the above syntax works because the MCF Buttons have the ._dictKwargs
+    # "MCF s1", "MCF s2", "MCF s3", etc... and so we are splicing the string to get either 1,2,3,... etc.
+    # which we will later use as an index to access the appropriate text display widget
 
     # if the user clicked OK, do the following:
     if dlg.ShowModal() == wx.ID_OK:
@@ -2108,6 +2106,7 @@ s6NmolsWidget.setFunction(defaultTextFunction)
 # SECTION 4.12: Addition of widgets to PanelFourFragmentFiles
 ######################################################################################
 
+# \ TODO
 
 
 
@@ -2116,7 +2115,7 @@ s6NmolsWidget.setFunction(defaultTextFunction)
 # SECTION 4.13: Addition of widgets to PanelFourInputFile
 ######################################################################################
 
-
+# \ TODO
 
 
 
@@ -2124,7 +2123,7 @@ s6NmolsWidget.setFunction(defaultTextFunction)
 # SECTION 4.14: Addition of widgets to PanelFourOutputFile
 ######################################################################################
 
-
+# \ TODO
 
 
 
