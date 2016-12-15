@@ -2106,9 +2106,50 @@ s6NmolsWidget.setFunction(defaultTextFunction)
 # SECTION 4.12: Addition of widgets to PanelFourFragmentFiles
 ######################################################################################
 
-# \ TODO
+# some static text that we add to the panel for guidance
+P4FFString1 = "Are your fragment files prepared?"
+P4FFString1Label = Widget(PanelFourFragmentFiles, widgetType = "static", \
+        name = P4FFString1, pos = (1,1), span = (1,2))
+
+P4FFString2 = "Select the fragment files for each species below."
+P4FFString2Label = Widget(PanelFourFragmentFiles, widgetType = "static", \
+        name = P4FFString2, pos = (3,1), span = (1,3))
+
+P4FFString3 = "After creating your input file, consult the user guide" + \
+        " regarding creation of your fragment files."
+P4FFString3Label = Widget(PanelFourFragmentFiles, widgetType = "static", \
+        name = P4FFString3, pos = (2,1), span = (1,6))
+
+# the user has either prepared their fragment files, or they have not.  Ask.
+ffOptionsPrepared = ["","Yes","No"]
+
+# our choice widget asking if their fragment files are prepared
+areFragFilesPreparedChoice = Widget(PanelFourFragmentFiles, widgetType = "choice", \
+        name = "", pos = (1,3), choices = ffOptionsPrepared)
+
+# they may select the fragment files for species 1 thru 6
+ffSpeciesOptions = ["","1","2","3","4","5","6"]
+
+# our label prompting the user to select a species
+P4SelectASpecies = Widget(PanelFourFragmentFiles, widgetType = "static", \
+        name = "Select a Species: ", pos = (6,1))
+
+# our choice widget where they select a species
+P4SelectSpeciesChoice = Widget(PanelFourFragmentFiles, widgetType = "choice", \
+        name = "", pos = (6,2), choices = ffSpeciesOptions)
+
+# our button where they select their files
+P4FFButton = Widget(PanelFourFragmentFiles, widgetType = "button", \
+        name = "Select Fragment Files", pos = (6,3))
 
 
+# our multiline text control that displays the user's selection for the given species
+P4FragFileDisplay = Widget(PanelFourFragmentFiles, widgetType = "text", \
+        name = "", pos = (7,3), span = (4,4), size = (300,300), \
+        style = (wx.TE_MULTILINE | wx.TE_READONLY))
+
+# assign dictionary keyword arguments for the assorted choices and buttons -
+# at least, those that store data..
 
 
 ######################################################################################
