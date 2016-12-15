@@ -394,9 +394,14 @@ class Widget:
                 self._obj = wx.TextCtrl(parentInstance,value=self._initValue,name=self._name)
                 self._wxEvt = wx.EVT_TEXT
             else:
-                self._obj = wx.TextCtrl(parentInstance,value='',size=self._size, \
-                        name = self._name,style = self._style)
-                self._wxEvt = wx.EVT_TEXT
+                if (self._size is not None):
+                    self._obj = wx.TextCtrl(parentInstance,value='',size=self._size, \
+                         name = self._name,style = self._style)
+                    self._wxEvt = wx.EVT_TEXT
+                else:
+                    self._obj = wx.TextCtrl(parentInstance, value = '', name = self._name, \
+                            style = self._style)
+                    self._wxEvt = wx.EVT_TEXT
 
     # need to add all types of widgets here; remember to overload necessary parameters for each via kwargs.get()
         elif (self._widgetType == "choice"):
@@ -712,7 +717,8 @@ def simDirFunction(event):
        myDict[objKeyword] = val
 
     if not val:
-        del myDict[objKeyword]
+        if (objKeyword in myDict.keys()):
+            del myDict[objKeyword]
 
     print objKeyword, val
 
@@ -1904,13 +1910,198 @@ s5SwapChoice.setFunction(defaultChoiceFunction)
 s6SwapChoice.setFunction(defaultChoiceFunction)
 
 
-
 ######################################################################################
 # SECTION 4.11: Addition of widgets to PanelFourMoleculeFiles
 ######################################################################################
 
+# "Select the MCF files below.  Enter the maximum number of anticipated molecules
+# for each species. " --label
+P4MCFString1 = "Select the MCF files below.  Enter the maximum number of anticipated " + \
+        "molecules for each species."
+P4MCFString1Label = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = P4MCFString1, pos = (1,1), span = (1,5))
+
+# another string we put on the panel
+P4MCFString2 = "This number will be used for memory allocation purposes only."
+P4MCFString2Label = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = P4MCFString2, pos = (2,1), span = (1,5))
+
+# 'Select' Label
+selectMCFLabel = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = "Select", pos = (3,2))
+
+# 'Selection' label
+selectionString = "                     Selection                     "
+selectionMCFLabel = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = selectionString, pos = (3,3))
+
+# '# Molecules' label
+nMoleculesLabel = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = "# Molecules", pos = (3,4))
+
+# species 1-6 labels
+s1MCFLabel = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = "Species 1: ", pos = (4,1))
+s2MCFLabel = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = "Species 2: ", pos = (5,1))
+s3MCFLabel = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = "Species 3: ", pos = (6,1))
+s4MCFLabel = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = "Species 4: ", pos = (7,1))
+s5MCFLabel = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = "Species 5: ", pos = (8,1))
+s6MCFLabel = Widget(PanelFourMoleculeFiles, widgetType = "static", \
+        name = "Species 6: ", pos = (9,1))
+
+# species 1-6 buttons
+s1MCFButton = Widget(PanelFourMoleculeFiles, widgetType = "button", \
+        name = "Select MCF File", pos = (4,2))
+s2MCFButton = Widget(PanelFourMoleculeFiles, widgetType = "button", \
+        name = "Select MCF File", pos = (5,2))
+s3MCFButton = Widget(PanelFourMoleculeFiles, widgetType = "button", \
+        name = "Select MCF File", pos = (6,2))
+s4MCFButton = Widget(PanelFourMoleculeFiles, widgetType = "button", \
+        name = "Select MCF File", pos = (7,2))
+s5MCFButton = Widget(PanelFourMoleculeFiles, widgetType = "button", \
+        name = "Select MCF File", pos = (8,2))
+s6MCFButton = Widget(PanelFourMoleculeFiles, widgetType = "button", \
+        name = "Select MCF File", pos = (9,2))
+
+# species 1-6 display selections (TE_READONLY text widgets)
+s1MCFDisplay = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (4,3), style = wx.TE_READONLY)
+s2MCFDisplay = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (5,3), style = wx.TE_READONLY)
+s3MCFDisplay = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (6,3), style = wx.TE_READONLY)
+s4MCFDisplay = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (7,3), style = wx.TE_READONLY)
+s5MCFDisplay = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (8,3), style = wx.TE_READONLY)
+s6MCFDisplay = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (9,3), style = wx.TE_READONLY)
+
+# species 1-6 nmolecules textwidgets
+s1NmolsWidget = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (4,4))
+s2NmolsWidget = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (5,4))
+s3NmolsWidget = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (6,4))
+s4NmolsWidget = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (7,4))
+s5NmolsWidget = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (8,4))
+s6NmolsWidget = Widget(PanelFourMoleculeFiles, widgetType = "text", \
+        name = "", pos = (9,4))
+
+# set dictionary keyword arguments for the buttons and the nmols textwidgets
+# (these are the only widgets which will store data)
+s1MCFButton.setDictKwarg("MCF s1")
+s2MCFButton.setDictKwarg("MCF s2")
+s3MCFButton.setDictKwarg("MCF s3")
+s4MCFButton.setDictKwarg("MCF s4")
+s5MCFButton.setDictKwarg("MCF s5")
+s6MCFButton.setDictKwarg("MCF s6")
+s1NmolsWidget.setDictKwarg("max nmols s1")
+s2NmolsWidget.setDictKwarg("max nmols s2")
+s3NmolsWidget.setDictKwarg("max nmols s3")
+s4NmolsWidget.setDictKwarg("max nmols s4")
+s5NmolsWidget.setDictKwarg("max nmols s5")
+s6NmolsWidget.setDictKwarg("max nmols s6")
 
 
+# our custom function for what to do when a "Select MCF File" button is clicked
+def MCFButtonFunction(event):
+
+    # get the object that received the event
+    obj = event.GetEventObject();
+
+    # instantiate a wx.FileDialog object
+    # we search the simulation directory for *.mcf files
+    dlg = wx.FileDialog(obj,"Select MCF File", myDict['simDir'], "","*.mcf",wx.OPEN)
+
+    # once the user has selected the file, read the file to get the expected number of fragments
+    # for the selected species
+
+    # an array of the display widgets
+    displayMCFVector = [s1MCFDisplay, s2MCFDisplay, s3MCFDisplay, s4MCFDisplay, s5MCFDisplay, s6MCFDisplay]
+
+    # the species number, as identified by the object that received the event
+    thisSpeciesNum = int(obj._dictKwarg[-1])
+
+    # if the user clicked OK, do the following:
+    if dlg.ShowModal() == wx.ID_OK:
+        val = dlg.GetPath()
+        f = file(val)
+        nfrags_ind = ""
+        nfrags_data = ""
+        for ind, line in enumerate(f):
+            if '#' in line and 'Fragment_Info' in line:
+                nfrags_ind = ind+1
+            if nfrags_ind:
+                if ind == nfrags_ind:
+                    line_data = line.split()
+                    nfrags_data = int(line_data[0])
+        if not nfrags_data:
+            print 'Number of fragments could not be identified for this species.'
+            nfrags_data = 0
+        file_data = os.path.relpath(val, str(myDict['simDir']))
+        val = file_data
+
+        # store the expected number of fragments in the global dictionary
+        nameOfFragData = "nfrags expected s%d" %thisSpeciesNum
+
+        # store the value in the dictionary
+        myDict[nameOfFragData] = nfrags_data
+
+    else:
+        val = ''
+
+    # we now have a value - whether that is the empty string, or the MCF relative file path
+    # so, display it on the appropriate text widget, and then store it in a dictionary
+    if val:
+        strToDisplay = "/" + os.path.split(val)[1] + "/"
+    else:
+        strToDisplay = val
+
+    # the species number goes from 1 to 6, the python indices go from 0-5, so subtract 1 from the species number
+    # and then access the ._obj (the wxWidgets object) and use the .SetValue() method to display the string
+    displayMCFVector[thisSpeciesNum-1]._obj.SetValue(strToDisplay)
+
+    # finally, store our data in the dictionary using the keyword argument from the button
+    objKeyword = obj._dictKwarg
+
+    noKeywordAlert = "No dictionary keyword specified for this widget - your data isn't being stored!"
+    if (objKeyword is None):
+        raise ValueError(noKeywordAlert)
+
+    # otherwise, everything went ok and we'll put the value in the dictionary
+    if (val):
+       myDict[objKeyword] = val
+
+    if not val:
+        if (objKeyword in myDict.keys()):
+            del myDict[objKeyword]
+
+    print objKeyword, val
+
+
+# bind the buttons to a specific button function (defined above)
+# bind the Nmols widgets to the default text function
+# and also, have the MCF buttons send their value to the corresponding display widget
+s1MCFButton.setFunction(MCFButtonFunction)
+s2MCFButton.setFunction(MCFButtonFunction)
+s3MCFButton.setFunction(MCFButtonFunction)
+s4MCFButton.setFunction(MCFButtonFunction)
+s5MCFButton.setFunction(MCFButtonFunction)
+s6MCFButton.setFunction(MCFButtonFunction)
+s1NmolsWidget.setFunction(defaultTextFunction)
+s2NmolsWidget.setFunction(defaultTextFunction)
+s3NmolsWidget.setFunction(defaultTextFunction)
+s4NmolsWidget.setFunction(defaultTextFunction)
+s5NmolsWidget.setFunction(defaultTextFunction)
+s6NmolsWidget.setFunction(defaultTextFunction)
 
 
 ######################################################################################
