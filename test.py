@@ -61,6 +61,7 @@ class Frame:
 
       # implicit argument self
       # parent: typically None, but if a frame is spawned dynamically it may be useful to pass the relevant object
+      #             --- for an example of a dynamically spawned frame, see hMatrixFunction, below
       # title: string displayed at the top of the frame (the name)
       # size: integer tuple (e.g., (100,100)) specifying the size of the frame in pixels
     def __init__(self, parent, title, size, **kwargs):
@@ -156,6 +157,8 @@ class Notebook:
         newPage = event.GetSelection()
 
         customBehavior()
+        event.Skip()
+
 
 class wxPanel(wx.Panel):
     def __init__(self,sibling):
@@ -197,7 +200,7 @@ class wxPanel(wx.Panel):
 class Panel:
     # what do we require from the user to instantiate a base panel object?
     # make an iterable list of panel instances; make sure methods only access this /after/
-    # the main frame has added all objects (i.e., at the end of th user's GUI script!)
+    # the main frame has added all objects (i.e., at the end of the user's GUI script!)
     _register = []
 
     # all instances of this class have the _typeName = "Panel"
@@ -334,6 +337,11 @@ class Widget:
         message = str(event.GetString())
         for slave in self._slaves:
             slave.evaluateMessage(message);
+            if slave._hasSlave:
+                slave.masterFunction(event)
+        #print 'in master function!'
+        #print 'object triggering this: ', self._pos
+        event.Skip()
 
 
     def evaluateMessage(self,message):
@@ -362,6 +370,7 @@ class Widget:
         master._slaves.append(self);
         self._hasMaster = True;
 
+        # ensure that the master widget knows it has a slave
         if master._hasSlave == False:
             master._hasSlave = True;
 
@@ -471,6 +480,7 @@ PanelFour = Panel(TopNotebook,name="File Handling");
 
 
 
+
 ######################################################################################
 # SECTION 2: Creation of subnotebooks
 ######################################################################################
@@ -568,6 +578,7 @@ def defaultTextFunction(event):
             del myDict[objKeyword]
 
     print objKeyword, val
+    event.Skip()
 
 # default behavior for our choice widget objects
 # this is essentially identical to our text widget function, but we make a distinction for clarity
@@ -595,7 +606,7 @@ def defaultChoiceFunction(event):
             del myDict[objKeyword]
 
     print objKeyword, val
-
+    event.Skip()
 
 ######################################################################################
 # SECTION 4.1: Addition of widgets to PanelOnePageOne (Basic Information / Page One)
@@ -663,6 +674,7 @@ staticText2 = Widget(PanelOnePageOne,widgetType="static",name=string2, \
         pos=(12,1),span=(1,1))
 
 
+
 ##########
 # Set dictionary keyword for widgets which have functionality (for the most part, everything
 # other than labels); also, special case: we don't need anything for the 'create input file' button
@@ -721,10 +733,14 @@ def simDirFunction(event):
             del myDict[objKeyword]
 
     print objKeyword, val
+    event.Skip()
+
 
 def createInputFileFunction(event):
     # TODO super dooper important, pretty much the reason for the whole thing
-    pass
+    print myDict['runName']
+
+
 
 #######################################################################################
 # set the functions to which these widgets will respond; some of them will be standard,
@@ -736,6 +752,9 @@ numberOfSpeciesWidget.setFunction(defaultChoiceFunction)
 ensembleWidget.setFunction(defaultChoiceFunction)
 makeInputFileWidget.setFunction(createInputFileFunction)
 
+testHideWidget = Widget(PanelOnePageOne, widgetType="static", name = "Hide me!", \
+        pos = (3,3))
+testHideWidget.setMaster(runNameWidget,["123","1234","123456"])
 
 
 # show/hide dynamics
@@ -798,6 +817,10 @@ seed1Widget = Widget(PanelOnePageTwo, widgetType="text", name = "seed1", \
 # seed 2: label and text widget
 seed2Widget = Widget(PanelOnePageTwo, widgetType="text", name = "seed2", \
         pos=(6,2), label = "Seed 2: ", labelPos=(6,1))
+
+# pressure: label and text widget
+pressureWidget = Widget(PanelOnePageTwo, widgetType="text", name = "pressure", \
+        pos=(7,2), label = "Pressure (bar):", labelPos=(7,1))
 
 # "Box Information" label
 boxInfoLabel = Widget(PanelOnePageTwo, widgetType="static", name = "Box Information", \
@@ -897,6 +920,8 @@ def destroyHMatrix(event):
     # we call the Close() function on the Frame object (i.e., destroy the top level object).
     frameToBeClosed = obj.GetParent().GetParent()
     frameToBeClosed.Close();
+    event.Skip()
+
 
 def hMatrixFunction(event):
 
@@ -1051,6 +1076,7 @@ def hMatrixFunction(event):
 
     # and that concludes the hMatrix panels.  note that this handles both
     # the box 1 and box 2 h matrix stuff.
+    event.Skip()
 
 
 #########################################################
@@ -1062,6 +1088,7 @@ cutoffWidget.setDictKwarg("rCutoffLow")
 pairStorageWidget.setDictKwarg("pairStorage")
 seed1Widget.setDictKwarg("seed1")
 seed2Widget.setDictKwarg("seed2")
+pressureWidget.setDictKwarg("pressure")
 box1ShapeChoice.setDictKwarg("box1Shape")
 box2ShapeChoice.setDictKwarg("box2Shape")
 trialInsertionWidget.setDictKwarg("trialInsertions")
@@ -1085,6 +1112,7 @@ cutoffWidget.setFunction(defaultTextFunction)
 pairStorageWidget.setFunction(defaultChoiceFunction)
 seed1Widget.setFunction(defaultTextFunction)
 seed2Widget.setFunction(defaultTextFunction)
+pressureWidget.setFunction(defaultTextFunction)
 box1ShapeChoice.setFunction(defaultChoiceFunction)
 box2ShapeChoice.setFunction(defaultChoiceFunction)
 trialInsertionWidget.setFunction(defaultTextFunction)
@@ -1102,8 +1130,13 @@ chemicalPotentialS5Widget.setFunction(defaultTextFunction)
 chemicalPotentialS6Widget.setFunction(defaultTextFunction)
 
 
+######################################################################################
+# show/hide dynamics - PanelOnePageTwo
+######################################################################################
 
-# show/hide dynamics \TODO
+# first; pressure widget - this is hidden when NVT_MC or NVT_MIN is selected as
+# the ensemble
+pressureWidget.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN"])
 
 
 ######################################################################################
@@ -1766,10 +1799,14 @@ P3InsertionString1Label = Widget(PanelThreeInsertion, widgetType = "static", \
 
 # another string to be placed on the panel
 P3InsertionString2 = "Additionally, insertion moves define an equal probability of " + \
-        "deletion, and so this probability should be counted twice when summing to 1."
-P3InsertionString2Label = Widget(PanelThreeInsertion, widgetType = "static", \
-        name = P3InsertionString2, pos = (2,2), span = (2,6))
+        "deletion, and so this "
+P3InsertionString3 = "probability should be counted twice when summing to 1."
 
+P3InsertionString2Label = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = P3InsertionString2, pos = (2,2), span = (1,6))
+
+P3InsertionString3Label = Widget(PanelThreeInsertion, widgetType = "static", \
+        name = P3InsertionString3, pos = (3,2), span = (1,6))
 # another string to be placed on the panel...
 P3InsertionString3 = "This flag is allowed only for GCMC simulations."
 P3InsertionString3Label = Widget(PanelThreeInsertion, widgetType = "static", \
@@ -2083,6 +2120,8 @@ def MCFButtonFunction(event):
             del myDict[objKeyword]
 
     print objKeyword, val
+
+    event.Skip()
 
 
 # bind the buttons to a specific button function (defined above)
