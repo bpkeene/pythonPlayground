@@ -24,6 +24,7 @@
 #   Revision history:
 #   23 July 2015 - (BK) rewrote
 #   8 September 2016 - (BK) implemented template resources
+#   2 January 2017   - (BK) added support for v1.2
 #
 #********************************************************************************
 
@@ -296,6 +297,10 @@ class Widget:
         self._hasSlave = False;
         self._fontOptions = kwargs.get('fontOptions',None)
 
+        # an array of booleans; this is positional with respect to the array of 'master' widgets that this
+        # object has.  "True" denotes that the widget should display, according to the master at index self._masters[index].
+        # if any of the values are false, the widget will not display.
+        self._hideArray = []
 
         # these will be instantiated during the creation of the parent object
         self._labelObj = None;
@@ -335,40 +340,77 @@ class Widget:
     def masterFunction(self,event):
         # pass the value of this widget to slaved widgets
         message = str(event.GetString())
+        masterObj = event.GetEventObject()
+
         for slave in self._slaves:
-            slave.evaluateMessage(message);
+            slave.evaluateMessage(masterObj, message);
             if slave._hasSlave:
                 slave.masterFunction(event)
-        #print 'in master function!'
-        #print 'object triggering this: ', self._pos
         event.Skip()
 
 
-    def evaluateMessage(self,message):
+    def evaluateMessage(self,masterObj, message):
         # this is used by the interface to loop over child widgets
         # in the event that a chosen selection hides multiple levels of the parent-child hierarchy.
         # continues until exhaustion
-        if message in self._hideWhen:
+
+
+        thisIndexToIterate = -1; # this should throw an array loop 'out of bounds' error if not changed
+
+        # iterate over self._masters to find the index corresponding to the masterObject that received an event
+        for index, item in enumerate(self._masters):
+            if (item._obj is masterObj):
+                thisIndexToIterate = index
+                break
+            else:
+                continue
+
+        # if the message received is in the hideWhen list corresponding to this master object, hide stuff
+        if message in self._hideWhen[thisIndexToIterate]:
+            self._hideArray[index] = True;
             self._obj.Hide()
             if (self._labelObj is not None):
                 self._labelObj.Hide()
             self._parent._obj.Layout()
+
+        # else, show stuff, provided all other master objects also indicate that this widget should be shown
         else:
+            # this indicates that this master widget is sending a 'display' message
+            self._hideArray[index] = False;
             self._obj.Show()
             if (self._labelObj is not None):
                 self._labelObj.Show()
+            # however, if another master widget is still asserting that this widget should hide,
+            # then it should remain hidden.  Therefore:
+            # if any of the values in the hideArray are True, then we call the .Hide() method
+            for item in self._hideArray:
+                if item is True:
+                    self._obj.Hide()
+                    if (self._labelObj is not None):
+                        self._labelObj.Hide()
+            # call the Layout() method to update the panel's appearance
             self._parent._obj.Layout()
 
     def setMaster(self, master, hideWhen):
         self._masters.append(master)
 
+        # append a value for this master widget to the _hideArray
+        # assume an initial value of 'false'- i.e., the widget will be displayed - if debugging (I find it
+        # helpful; this way, things are displayed)
+        # assume an initial value of 'True' if actually using the GUI for production purposes
+        self._hideArray.append(True)
         # assume hideWhen is in the form of an array
-        for instruction in hideWhen:
-            self._hideWhen.append(instruction)
+        #for instruction in hideWhen:
+        #    self._hideWhen.append(instruction)
+        self._hideWhen.append(hideWhen)
 
         # append self to master._slaves[]
         master._slaves.append(self);
-        self._hasMaster = True;
+
+        # if this is the first time we assign a master to this widget, change the boolean to True
+        # else, it will already be True
+        if not (self._hasMaster):
+            self._hasMaster = True;
 
         # ensure that the master widget knows it has a slave
         if master._hasSlave == False:
@@ -423,8 +465,8 @@ class Widget:
         # more types of widgets to be implemented
         elif (self._widgetType == "button"):
             if (self._name is None):
-                raise ValueError('%s has no name! The name of the button is displayed on the button, and \n\
-                is required!' %(self._name))
+                raise ValueError('A widget  has no name! The name of the button is displayed on the button, and \n\
+                is required!' )
             self._obj = wx.Button(parentInstance,label=self._name, name=self._name)
             self._wxEvt = wx.EVT_BUTTON
 
@@ -533,7 +575,6 @@ PanelFourOutputFile = Panel(PanelFourNotebook,name="Output File")
 
 
 
-
 ######################################################################################
 # SECTION 3.2: Definition of Global Functions for Widgets
 ######################################################################################
@@ -613,8 +654,8 @@ def defaultChoiceFunction(event):
 ######################################################################################
 # PanelOnePageOne is the panel to which the graphical user interface opens.
 # This panel is special in that it incorporates some navigational restrictions,
-# based on the current values of the widgets on the page! These restrictions are
-# enforced by (syntax here) TODO
+# based on the current values of the widgets on the page
+#
 #
 # PanelOnePageOne:
 #       - Run Name text
@@ -752,9 +793,11 @@ numberOfSpeciesWidget.setFunction(defaultChoiceFunction)
 ensembleWidget.setFunction(defaultChoiceFunction)
 makeInputFileWidget.setFunction(createInputFileFunction)
 
+# TODO: delete this, it is a proof of concept for the show/hide mechanics
 testHideWidget = Widget(PanelOnePageOne, widgetType="static", name = "Hide me!", \
         pos = (3,3))
 testHideWidget.setMaster(runNameWidget,["123","1234","123456"])
+testHideWidget.setMaster(ensembleWidget,["NVT_MC","NVT_MIN"])
 
 
 # show/hide dynamics
@@ -837,6 +880,17 @@ box1ShapeChoice = Widget(PanelOnePageTwo, widgetType="choice", name = "Box1 Shap
 # Box 2: label and choice widget
 box2ShapeChoice = Widget(PanelOnePageTwo, widgetType="choice", name = "Box2 Shape", \
         pos=(11,2), label = "Box 2: ", labelPos = (11,1), choices = boxShapeChoices)
+
+# Box Length Prompt label (for cubic boxes only)
+boxLengthLabel = Widget(PanelOnePageTwo, widgetType="static", \
+        name = "Box Edge Length (%s)" %angstrom, pos = (9,3))
+
+# Box 1: text widget for edge length
+box1LengthWidget = Widget(PanelOnePageTwo, widgetType = "text", name = "", \
+        pos=(10,3))
+
+box2LengthWidget = Widget(PanelOnePageTwo, widgetType = "text", name = "", \
+        pos=(11,3))
 
 # Box 1 H-Matrix Frame Button (## IMPORTANT - objects added to frame below!)
 box1HMatrix = Widget(PanelOnePageTwo, widgetType="button", name = "Create H Matrix", \
@@ -1091,6 +1145,8 @@ seed2Widget.setDictKwarg("seed2")
 pressureWidget.setDictKwarg("pressure")
 box1ShapeChoice.setDictKwarg("box1Shape")
 box2ShapeChoice.setDictKwarg("box2Shape")
+box1LengthWidget.setDictKwarg("box1Length")
+box2LengthWidget.setDictKwarg("box2Length")
 trialInsertionWidget.setDictKwarg("trialInsertions")
 rotationalBiasWidget.setDictKwarg("rotationalBias")
 trialOrientationsWidget.setDictKwarg("trialOrientations")
@@ -1115,6 +1171,8 @@ seed2Widget.setFunction(defaultTextFunction)
 pressureWidget.setFunction(defaultTextFunction)
 box1ShapeChoice.setFunction(defaultChoiceFunction)
 box2ShapeChoice.setFunction(defaultChoiceFunction)
+box1LengthWidget.setFunction(defaultTextFunction)
+box2LengthWidget.setFunction(defaultTextFunction)
 trialInsertionWidget.setFunction(defaultTextFunction)
 rotationalBiasWidget.setFunction(defaultTextFunction)
 trialOrientationsWidget.setFunction(defaultTextFunction)
@@ -1136,7 +1194,66 @@ chemicalPotentialS6Widget.setFunction(defaultTextFunction)
 
 # first; pressure widget - this is hidden when NVT_MC or NVT_MIN is selected as
 # the ensemble
+
+# we need to make some exceptions for the pressure widget according to the Gibb's phase rule..
 pressureWidget.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN"])
+
+boxLengthLabel.setMaster(box1ShapeChoice,["","NON-CUBIC"])
+box1LengthWidget.setMaster(box1ShapeChoice,["","NON-CUBIC"])
+box2LengthWidget.setMaster(box2ShapeChoice,["","NON-CUBIC"])
+
+
+# hide hMatrix for box 1 if the user selected 'cubic' as the style
+box1HMatrix.setMaster(box1ShapeChoice,["","CUBIC"])
+
+# if the ensemble selected is not GEMC, there is no second simulation box; so, hide box 2 prompts
+box2ShapeChoice.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GCMC"])
+box2HMatrix.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GCMC"])
+box2HMatrix.setMaster(box2ShapeChoice,["","CUBIC"])
+CBMCCutoffBox2.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GCMC"])
+
+chemicalPotentialLabel.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialLabel.setMaster(numberOfSpeciesWidget,[""])
+
+# species 1-6; these are shown only if the ensemble chosen is GCMC; hide for all other selections
+# our labels
+chemicalPotentialS1Label.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS2Label.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS3Label.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS4Label.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS5Label.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS6Label.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+# our widgets
+chemicalPotentialS1Widget.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS2Widget.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS3Widget.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS4Widget.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS5Widget.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+chemicalPotentialS6Widget.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
+
+# add number of species restrictions to the chemical potential widgets
+chemicalPotentialS1Label.setMaster(numberOfSpeciesWidget,[""])
+chemicalPotentialS2Label.setMaster(numberOfSpeciesWidget,["","1"])
+chemicalPotentialS3Label.setMaster(numberOfSpeciesWidget,["","1","2"])
+chemicalPotentialS4Label.setMaster(numberOfSpeciesWidget,["","1","2","3"])
+chemicalPotentialS5Label.setMaster(numberOfSpeciesWidget,["","1","2","3","4"])
+chemicalPotentialS6Label.setMaster(numberOfSpeciesWidget,["","1","2","3","4","5"])
+
+chemicalPotentialS1Widget.setMaster(numberOfSpeciesWidget,[""])
+chemicalPotentialS2Widget.setMaster(numberOfSpeciesWidget,["","1"])
+chemicalPotentialS3Widget.setMaster(numberOfSpeciesWidget,["","1","2"])
+chemicalPotentialS4Widget.setMaster(numberOfSpeciesWidget,["","1","2","3"])
+chemicalPotentialS5Widget.setMaster(numberOfSpeciesWidget,["","1","2","3","4"])
+chemicalPotentialS6Widget.setMaster(numberOfSpeciesWidget,["","1","2","3","4","5"])
+
+#####
+# and widgets that are initially hidden, even after considering navigational restrictions
+####
+boxLengthLabel.setInitHide(True)
+box1LengthWidget.setInitHide(True)
+box2LengthWidget.setInitHide(True)
+box1HMatrix.setInitHide(True)
+box2HMatrix.setInitHide(True)
 
 
 ######################################################################################
@@ -2214,12 +2331,11 @@ P4FragFileDisplay = Widget(PanelFourFragmentFiles, widgetType = "text", \
 
 
 
-
-
 ######################################################################################
 
 # initiate the event loop, and instruct the main frame to show!
 # this causes a cascade of instantiations - at this point, all objects must be declared.
+# ; also, 'setInitialState()' method allows for the correct
 if __name__ == "__main__":
     app = wx.App()
     MainFrame.initObj()
