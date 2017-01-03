@@ -1536,18 +1536,95 @@ interactionsLabel1N = Widget(PanelTwoIntramolecular, widgetType = "static", \
 # of writing this comment, that is 6*4*2 = 48
 # so, we do it iteratively
 # however, it is easiest if we split up the vdw and the coulombic into separate lists
+# and also do this with the species in separate lists
+
+# initialize empty lists for each species coulomb and vdw interaction scale factors
+s1vdwScales = []
+s1coulScales = []
+
+s2vdwScales = []
+s2coulScales = []
+
+s3vdwScales = []
+s3coulScales = []
+
+s4vdwScales = []
+s4coulScales = []
+
+s5vdwScales = []
+s5coulScales = []
+
+s6vdwScales = []
+s6coulScales = []
+
+# but we'll just loop over these
+# that being said, it is convenient to have those other lists explicitly as well.
+# maybe, anyways.
+allVdwList = [s1vdwScales, s2vdwScales, s3vdwScales,s4vdwScales,s5vdwScales,s6vdwScales]
+allCoulList = [s1coulScales,s2coulScales,s3coulScales,s4coulScales,s5coulScales,s6coulScales]
+
+# and we'll make a list of the labels made above while we're at it.  they need show/hide dynamics
+# and we can take care of that now
+allLabelsListIntramolecular = [s1IntraLabel, s2IntraLabel, s3IntraLabel, s4IntraLabel,
+        s5IntraLabel, s6IntraLabel]
 
 
-# something to note: we need to assign dictionary keywords to each of these
-vdwScalingAllSpecies = []
-coulScalingAllSpecies = []
-# \TODO
+# a list of the interactions.. we'll use this for defining the dictionary keyword arguments
+interactionScales = [" 1-2", " 1-3", " 1-4", " 1-N"]
+
+for i in range(len(allVdwList)):
+
+    # form the hideWhen message for based on which species we are making
+    messageForHiding = [""]
+    toAppendToMessage = ["%s" %(k+1) for k in range(i)]
+
+    # concatenate the lists - this is our list of number of species for which we hide the widget
+    messageForHiding = messageForHiding + toAppendToMessage
+
+    # implement show/hide for the "Species 1" "Species 2" .... labels
+    allLabelsListIntramolecular[i].setMaster(numberOfSpeciesWidget,messageForHiding)
+
+    # do the same thing for the "van der Waals" and "Coulombic" labels
+
+    # this will handle the widgets at 0,2,4,6,8,10 indices... i.e., "van der Waals"
+    labelsVdwCoulIntramolecular[2*i].setMaster(numberOfSpeciesWidget,messageForHiding)
+
+    # now "Coulombic"
+    labelsVdwCoulIntramolecular[2*i + 1].setMaster(numberOfSpeciesWidget,messageForHiding)
 
 
 
+    for j in range(4):
+        # the vdw labels are in position (5,[3,4,5,6]), (7,[3,4,5,6]), ....
+        # so alter their positions accordingly
+        thisVdwObj = Widget(PanelTwoIntramolecular, widgetType = "text", \
+                name = "", pos = (5 + 2*i, 3+j))
 
+        thisVdwObjKwarg = "s%s" %(i+1) + interactionScales[j] + " vdw"
 
+        # set the dictionary keyword argument for this object and the function
+        thisVdwObj.setDictKwarg(thisVdwObjKwarg)
+        thisVdwObj.setFunction(defaultTextFunction)
 
+        # set the master with the message defined above (above the j loop)
+        thisVdwObj.setMaster(numberOfSpeciesWidget,messageForHiding)
+        thisVdwObj.setInitHide(True)
+
+        # append to our list
+        allVdwList[i].append(thisVdwObj)
+
+        # repeat this process for the coulomb interaction
+        thisCoulObj = Widget(PanelTwoIntramolecular, widgetType = "text", \
+                name = "", pos = (6 + 2*i, 3+j))
+        thisCoulObjKwarg = "s%s" %(i+1) + interactionScales[j] + " coul"
+
+        thisCoulObj.setDictKwarg(thisCoulObjKwarg)
+        thisCoulObj.setFunction(defaultTextFunction)
+        thisCoulObj.setMaster(numberOfSpeciesWidget,messageForHiding)
+        thisCoulObj.setInitHide(True)
+        allCoulList[i].append(thisCoulObj)
+
+# additionally,
 
 ######################################################################################
 # SECTION 4.5: Addition of widgets to PanelThreeTranslation
