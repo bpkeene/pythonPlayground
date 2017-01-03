@@ -366,9 +366,22 @@ class Widget:
                 continue
 
         # if the message received is in the hideWhen list corresponding to this master object, hide stuff
+        # and also clear it; it is no longer relevant
         if message in self._hideWhen[thisIndexToIterate]:
             self._hideArray[index] = True;
             self._obj.Hide()
+
+            # we don't want any exceptions here (or we don't care... so just use try statements
+            if (self._widgetType == "text"):
+                self._obj.SetValue("")
+            #elif (self._widgetType == "choice"):
+            #    self._obj.SetSelection(0)
+
+            try:
+                del myDict[self._dictKwarg]
+            except:
+                pass
+
             if (self._labelObj is not None):
                 self._labelObj.Hide()
             self._parent._obj.Layout()
@@ -438,7 +451,6 @@ class Widget:
     def initObj(self,parentInstance):
         # for each, initialize the wx object in self._obj, and inform the class what kind of wx event to
         # expect in self._wxEvt
-       #self._obj = wxWidget(self)
 
         if (self._widgetType == "text"):
             if (self._style is None):
@@ -1210,6 +1222,7 @@ box1HMatrix.setMaster(box1ShapeChoice,["","CUBIC"])
 box2ShapeChoice.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GCMC"])
 box2HMatrix.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GCMC"])
 box2HMatrix.setMaster(box2ShapeChoice,["","CUBIC"])
+box2LengthWidget.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GCMC"])
 CBMCCutoffBox2.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GCMC"])
 
 chemicalPotentialLabel.setMaster(ensembleWidget,["","NVT_MC","NVT_MIN","NPT_MC","GEMC","GEMC_NPT"])
