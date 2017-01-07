@@ -70,6 +70,21 @@
 #
 # - ??? anything else?
 #
+# SUGGESTED PLAN:
+#   1. implement show/hide on PanelThreeTranslation
+#       - will be a straightforward application of the .setMaster() method, with only 'numberOfSpeciesWidget' as the
+#         master; these are shown for all ensembles, so it is very simple.  Same with Rotation.
+#   2. implement show/hide on the other Probabilities panels - some have dependencies on the chosen ensemble, so be mindful
+#       - but, it will be again a straightforward application of .setMaster() method; now, there are /two/ masters
+#           - note: the .setMaster() method must be called individually for each master
+#   3. same thing on PanelFourMoleculeFiles
+#   4.  add widgets to Input File and Output File tabs on 'File Handling' panel, implement functionality as required,
+#     and do some show/hide
+#   5. write the save function
+#
+#   For (4) and (5), it will likely be easiest to open up the old GUI and see what widgets were placed where
+#   and simply translate that code in to the new syntax here to get the same functionality.
+#
 
 
 # import the needed modules
