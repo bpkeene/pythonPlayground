@@ -1745,13 +1745,43 @@ def amberCharmmFunction(event):
     # so, if the object is the AMBER checkbox and the value is now true:
     if ((obj is amberCheckbox._obj) and event.IsChecked()):
         charmmCheckbox._obj.SetValue(False)
+
+        # denote that the values to assign to the shown species are the amber coefficients
+        lj_vals = amber_lj
+        elec_vals = amber_elec
     elif ((obj is charmmCheckbox._obj) and event.IsChecked()):
         amberCheckbox._obj.SetValue(False)
 
+        # denote that the values to assign to the shown species are the charmm coefficients
+        lj_vals = charmm_lj
+        elec_vals = charmm_elec
 
+    # else, the user is unchecking the box that is currently checked, so remove the values
+    # from all widgets
+    elif ((not amberCheckbox._obj.GetValue()) and (not charmmCheckbox._obj.GetValue())):
+        lj_vals = ["", "", "", ""]
+        elec_vals = ["","","",""]
 
+    # for all species in the range of the maximum number of species (
+    # this is defined earlier as '6' - search to find):
+    for i in range(maxNumberOfSpecies):
 
+        # extract the species widgets from the list of all species
+        thisSpeciesVdw = allVdwList[i]
+        thisSpeciesCoul = allCoulList[i]
 
+        # if (i+1) (since python uses 0,1,2,3,4,5 for range())
+        # is less than or equal to numSpecies, the number of species in our simulation as selected
+        # in the number of species widget:
+        if ((i+1) <= int(myDict['numSpecies'])):
+            for j in range(4):
+                thisSpeciesVdw[j]._obj.SetValue(lj_vals[j])
+                thisSpeciesCoul[j]._obj.SetValue(elec_vals[j])
+        # else, we pass an empty string
+        else:
+            for j in range(4):
+                thisSpeciesVdw[j]._obj.SetValue("")
+                thisSpeciesCoul[j]._obj.SetValue("")
 
 
 
