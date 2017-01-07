@@ -241,14 +241,9 @@ class Panel:
     def deleteWidget():
         pass
 
-    def bindToFunction():
-         # ehhhh... we might have already done this in the widget class. could be better that way.
-        pass
 
-#class wxWidget:
-#    def __init__(self,sibling):
-#        self._widget = None;
-#        if sibling._
+
+
 class Widget:
     _register = []
     _typeName = "Widget"
@@ -374,8 +369,8 @@ class Widget:
             # we don't want any exceptions here (or we don't care... so just use try statements
             if (self._widgetType == "text"):
                 self._obj.SetValue("")
-            #elif (self._widgetType == "choice"):
-            #    self._obj.SetSelection(0)
+            elif (self._widgetType == "choice"):
+                self._obj.SetSelection(0)
 
             try:
                 del myDict[self._dictKwarg]
@@ -791,6 +786,7 @@ def simDirFunction(event):
 
 def createInputFileFunction(event):
     # TODO super dooper important, pretty much the reason for the whole thing
+    # see previous version of GUI to see the basic structure, less some modifications for v1.2
     print myDict['runName']
 
 
@@ -1472,7 +1468,88 @@ box2ChargeMethod.setFunction(defaultChoiceFunction)
 box2ChargeCutoff.setFunction(defaultTextFunction)
 box2ChargeAccuracy.setFunction(defaultTextFunction)
 
-# show/hide dynamics TODO
+# show/hide dynamics
+# initially, we only definitely show functional form prompts for
+# the vdw and charge interactions, and the accompanying labels
+# --> all other widgets are hidden, and will be shown depending on the response
+
+# our vdw box 1 widgets to be initially hidden
+vdwBox1TailCorrection.setInitHide(True)
+vdwBox1CutoffLabel.setInitHide(True)
+vdwBox1Cutoff.setInitHide(True)
+vdwBox1SplineOff.setInitHide(True)
+vdwBox1Logical.setInitHide(True)
+
+# our vdw box 2 widgets to be initially hidden
+vdwBox2TailCorrection.setInitHide(True)
+vdwBox2Cutoff.setInitHide(True)
+vdwBox2CutoffLabel.setInitHide(True)
+vdwBox2SplineOff.setInitHide(True)
+vdwBox2Logical.setInitHide(True)
+
+# our charge style box 1 widgets to be initially hidden
+box1ChargeMethod.setInitHide(True)
+box1ChargeCutoff.setInitHide(True)
+box1ChargeAccuracy.setInitHide(True)
+
+# our charge style box 2 widgets to be initially hidden
+box2ChargeMethod.setInitHide(True)
+box2ChargeCutoff.setInitHide(True)
+box2ChargeAccuracy.setInitHide(True)
+
+# now, introduce functionality to the show/hide
+
+# first, we consider in what events we hide the Box 2 widgets - this will happen
+# when any ensemble other than GEMC or GEMC_NPT is selected
+whenToHideThese = [" ", "NVT_MC", "NVT_MIN","NPT_MC","GCMC"]
+
+# make an array of all box 2 vdw & charge style widgets
+# note that this includes /all/ box 2 widgets, including labels
+arrayOfBox2IntermolecularWidgets = [vdwBox2Label,vdwBox2FunctionalStyle, \
+                                    vdwBox2TailCorrection, vdwBox2Cutoff, \
+                                    vdwBox2CutoffLabel,  vdwBox2SplineOff, \
+                                    vdwBox2Logical , box2ChargeStyleLabel, \
+                                    box2ChargeFF, box2ChargeMethod, \
+                                    box2ChargeCutoff, box2ChargeAccuracy]
+
+# iterate over arrayOfBox2IntermolecularWidgets and call .setMaster, with the master being
+# the ensemble widget
+for index, item in enumerate(arrayOfBox2IntermolecularWidgets):
+    item.setMaster(ensembleWidget,whenToHideThese)
+
+# we've now addressed the situation in the event that the selected ensemble does not have a second box
+# now, we need to set up the hierarchy Functional Form > Tail Correction > (Cutoff ~ Spline Off ~ Logical)
+
+# tail correction option is shown only if the functional form selected is Lennard-Jones 12-6
+vdwBox1TailCorrection.setMaster(vdwBox1FunctionalStyle,["", "None","MIE"])
+vdwBox2TailCorrection.setMaster(vdwBox2FunctionalStyle,["", "None","MIE"])
+
+# we show this as long as the selection is not the empty string
+vdwBox1Cutoff.setMaster(vdwBox1TailCorrection,[""])
+vdwBox2Cutoff.setMaster(vdwBox2TailCorrection,[""])
+
+# we show the spline off selection only if the selection is cut switch
+vdwBox1SplineOff.setMaster(vdwBox1TailCorrection,["","cut","cut_tail","cut_shift"])
+vdwBox2SplineOff.setMaster(vdwBox2TailCorrection,["","cut","cut_tail","cut_shift"])
+
+# we show the logical widget only if the selection is cut tail
+vdwBox1Logical.setMaster(vdwBox1TailCorrection,["","cut","cut_switch","cut_shift"])
+vdwBox2Logical.setMaster(vdwBox2TailCorrection,["","cut","cut_switch","cut_shift"])
+
+#####
+# now, address charge style show/hide dynamics
+
+# show the methods only if the functional form selected is not " " or "None"
+box1ChargeMethod.setMaster(box1ChargeFF,["","None"])
+box2ChargeMethod.setMaster(box2ChargeFF,["","None"])
+
+# show the cutoff only if the method selected is not " "
+box1ChargeCutoff.setMaster(box1ChargeMethod,[""])
+box2ChargeCutoff.setMaster(box2ChargeMethod,[" "])
+
+# show the accuracy only if the method selected is not " " or "cut"
+box1ChargeAccuracy.setMaster(box1ChargeMethod,["","cut"])
+box2ChargeAccuracy.setMaster(box2ChargeMethod,["","cut"])
 
 
 ######################################################################################
@@ -1637,7 +1714,53 @@ for i in range(len(allVdwList)):
         thisCoulObj.setInitHide(True)
         allCoulList[i].append(thisCoulObj)
 
-# additionally,
+# additionally, define the functions for the CHARMM and AMBER checkboxes
+
+def amberCharmmFunction(event):
+
+    # get the object from which the event originated
+    obj = event.GetEventObject()
+
+    # make lists of the 1-2, 1-3, 1-4, 1-N CHARMM interaction scale factors
+    charmm_lj = ["0.0","0.0","0.0","1.0"]
+    charmm_elec = ["0.0","0.0","0.0","1.0"]
+
+    # and the same for AMBER parameters
+    amber_lj = ["0.0","0.0","0.5","1.0"]
+    amber_elec = ["0.0","0.0","0.8333","1.0"]
+
+    # first, we only allow one checkbox to be marked 'True' at any given time:
+
+    # so, if the object is the AMBER checkbox and the value is now true:
+    if ((obj is amberCheckbox._obj) and event.IsChecked()):
+        charmmCheckbox._obj.SetValue(False)
+    elif ((obj is charmmCheckbox._obj) and event.IsChecked()):
+        amberCheckbox._obj.SetValue(False)
+
+
+
+
+
+
+
+
+amberCheckbox.setFunction(amberCharmmFunction)
+charmmCheckbox.setFunction(amberCharmmFunction)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ######################################################################################
 # SECTION 4.5: Addition of widgets to PanelThreeTranslation
