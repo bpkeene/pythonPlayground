@@ -306,7 +306,7 @@ class Widget:
         # implement this /after/ we have connected all the show/hide funcitonality
         self._initHide = False;
 
-        # TODO: have the Panel's grid.Add() method use these flags when instantiating the widget
+        # have the Panel's grid.Add() method use these flags when instantiating the widget
         self._gridFlags = (wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.EXPAND | wx.ALIGN_CENTER)
 
         # default the dictionary keyword for data storage to 'None';
@@ -851,7 +851,7 @@ for widget in Widget._register:
 
 # lists of choices for choice widgets
 mixingRulesChoices = ["","Lorentz-Berthelot","Geometric"]
-pairStorageChoices = ["","TRUE","FALSE"] #TODO check if Cassandra's I/O is all caps
+pairStorageChoices = ["","TRUE","FALSE"] #
 boxShapeChoices = ["", "CUBIC","NON-CUBIC"]
 
 # temperature: label and text widget
@@ -978,7 +978,7 @@ chemicalPotentialS5Widget = Widget(PanelOnePageTwo, widgetType = "text", \
 chemicalPotentialS6Widget = Widget(PanelOnePageTwo, widgetType = "text", \
         name = "", pos = (7,6))
 
-#### H-Matrix Frame objects & functions \TODO
+#### H-Matrix Frame objects & functions
 def destroyHMatrix(event):
 
     # the user clicked 'Done', so destroy the Frame and its objects
