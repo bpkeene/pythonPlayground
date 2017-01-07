@@ -24,9 +24,53 @@
 #   Revision history:
 #   23 July 2015 - (BK) rewrote
 #   8 September 2016 - (BK) implemented template resources
-#   2 January 2017   - (BK) added support for v1.2
 #
 #********************************************************************************
+
+# TODO LIST:
+# - PanelOnePageOne "Basic Information > Page 1" : write the save function!
+#           -
+# - PanelOnePageTwo "Basic Information > Page 2" : nothing
+#
+# - PanelTwoIntermolecular "Interaction Parameters > Intermolecular" : support for MIE potential
+#                       - unsure what is required to do that - see user_guide.pdf & CASSANDRA code for what the
+#                         required information is
+# - PanelTwoIntramolecular "Interaction Parameters > Intramolecular" : nothing
+#
+# - PanelThree* -
+#           - all of these need to have show/hide functionality implemented.
+#             This will be a straightforward application of .setMaster() method,
+#             where the master widget will be numberOfSpeciesWidget and (at times) ensembleWidget.
+#             Note that masters must be set via indivual calls to .setMaster(), with their corresponding hideWhen message,
+#             which is assumed to have the form of a list [].
+#             They are already bound to functions sending the data to the
+#             dictionary (i.e., the .setFunction, .setDictKwarg methods completed)
+#
+# - PanelFourMoleculeFiles -
+#           - apply the .setMaster method, with numberOfSpeciesWidget as the master, to enforce show/hide dynamics
+#
+# - PanelFourFragmentFiles -
+#           - BPK will do this
+#
+# - PanelFourInputFile -
+#           - create the widgets seen on previous version of GUI
+#           - implement the show/hide features seen on previous version of GUI
+#           - add functionality to all buttons where relevant
+# - PanelFourOutputFile -
+#           -create the widgets seen on previous version of GUI
+#           -implement the show/hide features seen on previous version of GUI
+#           -add functionality to all buttons where relevant
+#
+# - Restrict navigation /from/ PanelOnePageOne
+#       - .Veto() the event where the user navigates from "Basic Information > Page 1" if they have not
+#         provided the necessary information - i.e., if they have not selected a simulation directory,
+#         or if they have not selected an ensemble, or if they have not selected the number of species,
+#         or if they have not provided a run name, then they are not allowed to leave that page.
+#             - BPK will do this
+#
+# - ??? anything else?
+#
+
 
 # import the needed modules
 import wx, os
