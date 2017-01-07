@@ -1,4 +1,4 @@
-#********************************************************************************
+#*******************************************************************************
 #   Cassandra - An open source atomistic Monte Carlo software package
 #   developed at the University of Notre Dame.
 #   http://cassandra.nd.edu
@@ -340,7 +340,22 @@ class Widget:
         for slave in self._slaves:
             slave.evaluateMessage(masterObj, message);
             if slave._hasSlave:
-                slave.masterFunction(event)
+                #slave.masterFunction(event) // previously, it was this
+                slave.propagateEmptyString(event)
+        event.Skip()
+
+    # a master choice widget had its selection changed; this will then instruct the slaves to reset
+    def propagateEmptyString(self,event):
+        # propagate the empty string and see what happens
+
+        # 'masterObj' will be passed to slave.evaluateMessage, and so it turns out to be self._obj
+        masterObj = self._obj
+
+        for slave in self._slaves:
+            slave.evaluateMessage(masterObj,"")
+            if slave._hasSlave:
+                slave.propagateEmptyString(event)
+
         event.Skip()
 
 
@@ -800,12 +815,6 @@ simulationDirectoryWidget.setFunction(simDirFunction)
 numberOfSpeciesWidget.setFunction(defaultChoiceFunction)
 ensembleWidget.setFunction(defaultChoiceFunction)
 makeInputFileWidget.setFunction(createInputFileFunction)
-
-# TODO: delete this, it is a proof of concept for the show/hide mechanics
-testHideWidget = Widget(PanelOnePageOne, widgetType="static", name = "Hide me!", \
-        pos = (3,3))
-testHideWidget.setMaster(runNameWidget,["123","1234","123456"])
-testHideWidget.setMaster(ensembleWidget,["NVT_MC","NVT_MIN"])
 
 
 # show/hide dynamics
@@ -1501,7 +1510,7 @@ box2ChargeAccuracy.setInitHide(True)
 
 # first, we consider in what events we hide the Box 2 widgets - this will happen
 # when any ensemble other than GEMC or GEMC_NPT is selected
-whenToHideThese = [" ", "NVT_MC", "NVT_MIN","NPT_MC","GCMC"]
+whenToHideThese = ["", "NVT_MC", "NVT_MIN","NPT_MC","GCMC"]
 
 # make an array of all box 2 vdw & charge style widgets
 # note that this includes /all/ box 2 widgets, including labels
@@ -1527,6 +1536,8 @@ vdwBox2TailCorrection.setMaster(vdwBox2FunctionalStyle,["", "None","MIE"])
 # we show this as long as the selection is not the empty string
 vdwBox1Cutoff.setMaster(vdwBox1TailCorrection,[""])
 vdwBox2Cutoff.setMaster(vdwBox2TailCorrection,[""])
+vdwBox1CutoffLabel.setMaster(vdwBox1TailCorrection,[""])
+vdwBox2CutoffLabel.setMaster(vdwBox2TailCorrection,[""])
 
 # we show the spline off selection only if the selection is cut switch
 vdwBox1SplineOff.setMaster(vdwBox1TailCorrection,["","cut","cut_tail","cut_shift"])
@@ -1545,7 +1556,7 @@ box2ChargeMethod.setMaster(box2ChargeFF,["","None"])
 
 # show the cutoff only if the method selected is not " "
 box1ChargeCutoff.setMaster(box1ChargeMethod,[""])
-box2ChargeCutoff.setMaster(box2ChargeMethod,[" "])
+box2ChargeCutoff.setMaster(box2ChargeMethod,[""])
 
 # show the accuracy only if the method selected is not " " or "cut"
 box1ChargeAccuracy.setMaster(box1ChargeMethod,["","cut"])
@@ -2525,7 +2536,9 @@ P4FragFileDisplay = Widget(PanelFourFragmentFiles, widgetType = "text", \
 # SECTION 4.13: Addition of widgets to PanelFourInputFile
 ######################################################################################
 
-# \ TODO
+#
+# TODO
+#
 
 
 
@@ -2533,7 +2546,7 @@ P4FragFileDisplay = Widget(PanelFourFragmentFiles, widgetType = "text", \
 # SECTION 4.14: Addition of widgets to PanelFourOutputFile
 ######################################################################################
 
-# \ TODO
+# \  TODO
 
 
 
